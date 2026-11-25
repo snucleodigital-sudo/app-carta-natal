@@ -1,8 +1,21 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Núcleo Carta Natal</title>
-<meta name="claude:viewport-fit-sides" content="cover">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,500&family=Inter:wght@400;500;600&family=Noto+Sans+Symbols:wght@400;500&display=swap">
+<meta name="description" content="Tu carta natal, bella y sencilla. Núcleo Astrológico.">
+<meta name="theme-color" content="#F5EFE6" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0B1326" media="(prefers-color-scheme: dark)">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="icons/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Carta natal">
+<link rel="stylesheet" href="fonts/fuentes.css">
 <style>
 /* Layout: una columna centrada (máx. 1040px); en escritorio la rueda a la izquierda y la tríada + planetas a la derecha.
    MARCA: para cambiar el estilo, edita solo estos tokens. */
@@ -41,6 +54,8 @@ header.top{display:flex;align-items:center;justify-content:space-between;gap:16p
 .brand small{display:block;font-size:10px;letter-spacing:.24em;text-transform:uppercase;color:var(--muted);margin-top:5px}
 .btn-ghost{white-space:nowrap;background:none;border:1px solid var(--line);border-radius:999px;padding:8px 14px;cursor:pointer;font-size:13px}
 .btn-ghost:hover{border-color:var(--accent)}
+.top-actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+#instalar{border-color:var(--dorado)}
 
 /* Formulario */
 .form-card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:20px;margin-top:16px}
@@ -160,7 +175,8 @@ h3.sec{font-size:20px;margin:22px 0 10px}
 .loading{color:var(--muted);font-size:13px}
 @media (prefers-reduced-motion:no-preference){ .wheel-card svg .pl{transition:opacity .4s} }
 </style>
-
+</head>
+<body>
 <div class="wrap">
   <header class="top">
     <a class="brand" href="#" aria-label="Núcleo Astrológico">
@@ -171,7 +187,10 @@ h3.sec{font-size:20px;margin:22px 0 10px}
       </svg>
       <span><b>Núcleo Astrológico</b><small>Carta natal</small></span>
     </a>
-    <button class="btn-ghost" id="toNew" type="button">Nueva carta</button>
+    <div class="top-actions">
+      <button class="btn-ghost" id="instalar" type="button" hidden>Instalar</button>
+      <button class="btn-ghost" id="toNew" type="button">Nueva carta</button>
+    </div>
   </header>
 
   <form class="form-card" id="form" autocomplete="off" novalidate>
@@ -556,3 +575,19 @@ $('save').onclick=()=>{const p=leerForm();if(typeof p==='string'){$('err').textC
 pintarPerfiles();
 ready.then(()=>{$('calc').disabled=false;nuevaNatal(calcular(EJEMPLO))}).catch(err=>{console.error(err);$('wheel').innerHTML='<p class="loading" style="color:#F5EFE6;padding:40px 8px">No se pudo iniciar el motor de cálculo en este navegador.</p>'});
 </script>
+<script>
+/* ===== App instalable (PWA) ===== */
+if ('serviceWorker' in navigator && location.protocol !== 'file:') {
+  window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(e => console.warn('Sin modo offline:', e)));
+}
+let avisoInstalar = null;
+window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); avisoInstalar = e; document.getElementById('instalar').hidden = false; });
+document.getElementById('instalar').addEventListener('click', async () => {
+  if (!avisoInstalar) return;
+  avisoInstalar.prompt(); await avisoInstalar.userChoice; avisoInstalar = null;
+  document.getElementById('instalar').hidden = true;
+});
+window.addEventListener('appinstalled', () => { document.getElementById('instalar').hidden = true; });
+</script>
+</body>
+</html>

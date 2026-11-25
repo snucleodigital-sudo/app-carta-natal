@@ -1,0 +1,14 @@
+# Configuración para Hostinger (Apache/LiteSpeed)
+AddType application/wasm .wasm
+AddType application/manifest+json .webmanifest
+AddType font/woff2 .woff2
+
+# La página y el service worker siempre se revisan, para que las actualizaciones lleguen.
+<FilesMatch "^(index\.html|sw\.js|manifest\.webmanifest)$">
+  Header set Cache-Control "no-cache"
+</FilesMatch>
+
+# Forzar https (necesario para que la app sea instalable)
+RewriteEngine On
+RewriteCond %{HTTPS} off
+RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
