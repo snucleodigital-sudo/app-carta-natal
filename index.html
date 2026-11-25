@@ -1,0 +1,558 @@
+<title>Núcleo Carta Natal</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,500&family=Inter:wght@400;500;600&family=Noto+Sans+Symbols:wght@400;500&display=swap">
+<style>
+/* Layout: una columna centrada (máx. 1040px); en escritorio la rueda a la izquierda y la tríada + planetas a la derecha.
+   MARCA: para cambiar el estilo, edita solo estos tokens. */
+:root{
+  --noche:#101B33; --crema:#F5EFE6; --dorado:#B8975A; --terracota:#B5654A; --salvia:#8FA396;
+  --bg:#F5EFE6; --surface:#FBF8F3; --fg:#101B33; --muted:#5B6275; --line:#D9D0C2; --accent:#9A7A41;
+  --field:#FFFFFF; --wheel-bg:#101B33; --wheel-line:#B8975A; --wheel-fg:#F5EFE6;
+  --f-display:"Fraunces", "Cormorant Garamond", Georgia, serif;
+  --f-text:"Inter", -apple-system, "Segoe UI", Roboto, sans-serif;
+  --f-glyph:"Noto Sans Symbols", "Segoe UI Symbol", "Apple Symbols", sans-serif;
+  --r:14px;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0B1326; --surface:#121D36; --fg:#EFE8DC; --muted:#A3A9B8; --line:#26324F; --accent:#CDAE73; --field:#0E1730;
+  --wheel-bg:#0E1830; color-scheme:dark }}
+:root[data-theme="dark"]{
+  --bg:#0B1326; --surface:#121D36; --fg:#EFE8DC; --muted:#A3A9B8; --line:#26324F; --accent:#CDAE73; --field:#0E1730;
+  --wheel-bg:#0E1830; color-scheme:dark }
+
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{background:var(--bg);color:var(--fg);font:400 15px/1.55 var(--f-text);
+  padding-left:max(16px, env(safe-area-inset-left,0px));padding-right:max(16px, env(safe-area-inset-right,0px));padding-block:0 48px}
+.wrap{max-width:1040px;margin:0 auto}
+.g{font-family:var(--f-glyph);font-variant-emoji:text}
+h1,h2,h3{font-family:var(--f-display);font-weight:400;text-wrap:balance;margin:0;letter-spacing:-.01em}
+.eyebrow{font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--muted);font-weight:500}
+button,input,select{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:6px}
+
+/* Cabecera */
+header.top{display:flex;align-items:center;justify-content:space-between;gap:16px;padding-block:20px 8px}
+.brand{display:flex;align-items:center;gap:12px;text-decoration:none;color:inherit}
+.brand svg{width:38px;height:38px;flex:none}
+.brand b{font:400 clamp(18px,4.6vw,21px)/1.05 var(--f-display);letter-spacing:-.01em;display:block}
+.brand small{display:block;font-size:10px;letter-spacing:.24em;text-transform:uppercase;color:var(--muted);margin-top:5px}
+.btn-ghost{white-space:nowrap;background:none;border:1px solid var(--line);border-radius:999px;padding:8px 14px;cursor:pointer;font-size:13px}
+.btn-ghost:hover{border-color:var(--accent)}
+
+/* Formulario */
+.form-card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:20px;margin-top:16px}
+.form-card h1{font-size:clamp(26px,4.4vw,36px);line-height:1.1}
+.form-card p.lead{color:var(--muted);margin:6px 0 18px;max-width:60ch}
+.grid{display:grid;grid-template-columns:repeat(12,1fr);gap:14px}
+.f{display:flex;flex-direction:column;gap:6px;min-width:0;grid-column:span 12}
+@media (min-width:720px){.f.c4{grid-column:span 4}.f.c3{grid-column:span 3}.f.c5{grid-column:span 5}}
+label{font-size:12px;font-weight:500;color:var(--muted)}
+input[type=text],input[type=date],input[type=time],input[type=number]{width:100%;background:var(--field);border:1px solid var(--line);border-radius:10px;padding:11px 12px;min-height:44px}
+input:focus{border-color:var(--accent);outline:none;box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 22%,transparent)}
+.check{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted);margin-top:2px}
+.place{position:relative}
+.sugg{position:absolute;z-index:5;left:0;right:0;top:100%;margin-top:4px;background:var(--surface);border:1px solid var(--line);border-radius:10px;
+  box-shadow:0 12px 30px rgba(16,27,51,.14);list-style:none;padding:4px;margin-left:0;max-height:280px;overflow:auto}
+.sugg li{padding:9px 10px;border-radius:7px;cursor:pointer;display:flex;justify-content:space-between;gap:10px}
+.sugg li small{color:var(--muted)}
+.sugg li[aria-selected=true],.sugg li:hover{background:color-mix(in srgb,var(--dorado) 16%,transparent)}
+.hint{font-size:12px;color:var(--muted)}
+.actions{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:16px}
+.btn{background:var(--noche);color:var(--crema);border:0;border-radius:999px;padding:12px 22px;font-weight:500;cursor:pointer;min-height:44px}
+:root[data-theme="dark"] .btn{background:var(--dorado);color:var(--noche)}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .btn{background:var(--dorado);color:var(--noche)}}
+.btn:disabled{opacity:.5;cursor:wait}
+details.adv{margin-top:12px;font-size:13px;color:var(--muted)}
+details.adv summary{cursor:pointer}
+.err{color:var(--terracota);font-size:13px;min-height:1em}
+
+/* Perfiles */
+.profiles{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:14px}
+.chip{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:999px;padding:6px 8px 6px 12px;background:var(--surface);font-size:13px;cursor:pointer}
+.chip.on{border-color:var(--accent)}
+.chip .x{border:0;background:none;color:var(--muted);cursor:pointer;padding:0 4px;font-size:15px;line-height:1}
+.quota{font-size:12px;color:var(--muted)}
+.pro{font-size:10px;letter-spacing:.14em;text-transform:uppercase;border:1px solid var(--dorado);color:var(--accent);border-radius:999px;padding:2px 7px;margin-left:4px}
+
+/* Resultado */
+.result{display:grid;gap:24px;margin-top:28px}
+.result>*{min-width:0}
+@media (min-width:900px){.result{grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);align-items:start}.wheel-card{position:sticky;top:16px}}
+.wheel-card{background:var(--wheel-bg);border-radius:20px;padding:clamp(10px,2.4vw,22px);position:relative}
+.wheel-card svg{display:block;width:100%;height:auto;max-width:100%}
+.whead{display:flex;justify-content:space-between;gap:12px;align-items:baseline;color:var(--crema);padding:4px 6px 6px}
+.whead h2{font-size:clamp(22px,3vw,28px)}
+.whead .meta{font-size:12px;color:#B9BED0;text-align:right}
+.badge{display:inline-block;font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--noche);background:var(--salvia);border-radius:999px;padding:3px 8px;margin-bottom:6px}
+
+.triad{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.tri{border:1px solid var(--line);border-radius:var(--r);padding:14px 12px;background:var(--surface);display:flex;flex-direction:column;gap:2px;min-width:0}
+.tri .g{font-size:26px;color:var(--accent);line-height:1}
+.tri .k{font-size:10.5px;letter-spacing:.12em;overflow-wrap:anywhere;text-transform:uppercase;color:var(--muted);margin-top:8px}
+.tri .s{font:400 clamp(19px,2.4vw,23px)/1.15 var(--f-display)}
+.tri .d{font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
+
+.plist{margin-top:18px;border-top:1px solid var(--line)}
+.prow{display:grid;grid-template-columns:34px minmax(0,1fr) auto;gap:10px;align-items:center;padding:12px 2px;border-bottom:1px solid var(--line)}
+.prow .g{font-size:21px;text-align:center;color:var(--fg)}
+.prow .n{font-weight:500}
+.prow .n .rx{font-size:11px;color:var(--terracota);margin-left:6px;font-weight:600}
+.prow .sub{font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums}
+.more{background:none;border:1px solid var(--line);border-radius:999px;padding:7px 12px;font-size:12.5px;cursor:pointer;white-space:nowrap}
+.more:hover{border-color:var(--accent);color:var(--accent)}
+.modebar{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:14px 24px;align-items:flex-end}
+.seg{display:inline-flex;background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:4px}
+.seg button{border:0;background:none;border-radius:999px;padding:9px 18px;cursor:pointer;font-weight:500;color:var(--muted);min-height:40px}
+.seg button[aria-selected=true]{background:var(--noche);color:var(--crema)}
+:root[data-theme="dark"] .seg button[aria-selected=true]{background:var(--dorado);color:var(--noche)}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .seg button[aria-selected=true]{background:var(--dorado);color:var(--noche)}}
+.retctl{display:flex;flex-wrap:wrap;gap:12px;flex:1 1 340px;min-width:0}
+.retctl .f{grid-column:auto}
+.retctl .place{flex:1 1 220px;min-width:0}
+.yr{display:flex;gap:6px;align-items:center}
+.yr input{width:96px;text-align:center}
+.yr .btn-ghost{min-width:40px;min-height:44px;font-size:18px;padding:0 12px}
+.tabs{display:flex;gap:6px;margin-top:20px;border-bottom:1px solid var(--line)}
+.tabs button{background:none;border:0;border-bottom:2px solid transparent;padding:10px 4px;margin-right:14px;cursor:pointer;color:var(--muted);font-weight:500}
+.tabs button[aria-selected=true]{color:var(--fg);border-bottom-color:var(--dorado)}
+.prow{cursor:pointer}
+.prow .sub .dig{color:var(--accent)}
+.pdet{padding:4px 2px 16px 44px;border-bottom:1px solid var(--line);display:flex;flex-direction:column;gap:6px}
+.pdet .info{font-size:13px;color:var(--muted)}
+.asp{display:grid;grid-template-columns:22px minmax(0,1fr);gap:8px;align-items:baseline;font-size:13.5px}
+.asp .g{font-size:16px;text-align:center}
+.asp small{display:block;color:var(--muted);font-size:12px}
+.chev{display:inline-block;margin-left:6px;color:var(--muted);transition:transform .2s;font-size:11px}
+.prow[aria-expanded=true] .chev{transform:rotate(90deg)}
+h3.sec{font-size:20px;margin:22px 0 10px}
+.dist{display:grid;gap:16px}
+.dgroup .lbl{font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
+.drow{display:grid;grid-template-columns:104px minmax(0,1fr) 26px;gap:10px;align-items:center;font-size:13px;margin:4px 0}
+.drow .bar{height:10px;border-radius:999px;background:color-mix(in srgb,var(--line) 70%,transparent);overflow:hidden}
+.drow .bar i{display:block;height:100%;border-radius:999px}
+.drow .num{text-align:right;font-variant-numeric:tabular-nums;color:var(--muted)}
+.drow .who{grid-column:2/4;font-family:var(--f-glyph);font-size:13px;color:var(--muted);margin-top:-2px;letter-spacing:.12em}
+.gridwrap{overflow-x:auto;max-width:100%}
+.agrid{border-collapse:collapse;font-family:var(--f-glyph);font-size:15px}
+.agrid td,.agrid th{width:28px;height:28px;min-width:28px;text-align:center;border:1px solid var(--line);padding:0;font-weight:400}
+.agrid th{color:var(--fg);background:var(--surface)}
+.agrid td.e{border:0}
+.agrid td.a{cursor:help}
+.casas{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:4px 18px;font-size:13.5px;font-variant-numeric:tabular-nums}
+@media (min-width:520px){.casas{grid-template-columns:repeat(3,minmax(0,1fr))}}
+.casas div{display:flex;justify-content:space-between;gap:8px;border-bottom:1px dotted var(--line);padding:5px 0}
+.casas b{font-weight:500}
+.foot{font-size:12px;color:var(--muted);margin-top:14px;line-height:1.6}
+.foot code{font-size:11.5px}
+
+/* Panel "Leer más" */
+.sheet{position:fixed;inset:auto 0 0 0;z-index:20;background:var(--surface);border-top:1px solid var(--line);
+  box-shadow:0 -14px 40px rgba(16,27,51,.18);border-radius:18px 18px 0 0;
+  padding:20px max(20px, env(safe-area-inset-right,0px)) calc(20px + env(safe-area-inset-bottom,0px)) max(20px, env(safe-area-inset-left,0px))}
+.sheet .in{max-width:620px;margin:0 auto;display:flex;flex-direction:column;gap:10px}
+.sheet h3{font-size:24px}
+.sheet a.lnk{display:flex;justify-content:space-between;gap:10px;border:1px solid var(--line);border-radius:10px;padding:11px 12px;color:inherit;text-decoration:none}
+.sheet a.lnk span{color:var(--muted);font-size:12px;word-break:break-all}
+.sheet .soon{font-size:13px;color:var(--muted)}
+.loading{color:var(--muted);font-size:13px}
+@media (prefers-reduced-motion:no-preference){ .wheel-card svg .pl{transition:opacity .4s} }
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <a class="brand" href="#" aria-label="Núcleo Astrológico">
+      <svg viewBox="0 0 100 100" aria-hidden="true">
+        <circle cx="50" cy="50" r="49" fill="#F5EFE6" stroke="#101B33" stroke-opacity=".12"/>
+        <circle cx="50" cy="50" r="31" fill="none" stroke="#101B33" stroke-width="7" stroke-dasharray="15.2 4.28" transform="rotate(-82 50 50)"/>
+        <circle cx="50" cy="50" r="10" fill="#B8975A"/>
+      </svg>
+      <span><b>Núcleo Astrológico</b><small>Carta natal</small></span>
+    </a>
+    <button class="btn-ghost" id="toNew" type="button">Nueva carta</button>
+  </header>
+
+  <form class="form-card" id="form" autocomplete="off" novalidate>
+    <h1>Tu carta natal</h1>
+    <p class="lead">Escribe tu fecha, hora y lugar de nacimiento. Calculamos la posición exacta de cada planeta en ese momento.</p>
+    <div class="grid">
+      <div class="f c4"><label for="nombre">Nombre</label><input type="text" id="nombre" placeholder="Opcional" maxlength="40"></div>
+      <div class="f c4"><label for="fecha">Fecha de nacimiento</label><input type="date" id="fecha" min="1800-01-01" max="2399-12-31" required></div>
+      <div class="f c4"><label for="hora">Hora</label><input type="time" id="hora" required>
+        <label class="check"><input type="checkbox" id="sinHora"> No sé la hora exacta</label></div>
+      <div class="f place"><label for="lugar">Lugar de nacimiento</label>
+        <input type="text" id="lugar" placeholder="Escribe tu ciudad o pueblo" role="combobox" aria-expanded="false" aria-controls="sugg" aria-autocomplete="list" required>
+        <ul class="sugg" id="sugg" role="listbox" hidden></ul>
+        <span class="hint" id="lugarHint">Cargando ciudades…</span></div>
+    </div>
+    <details class="adv"><summary>Ajustes avanzados</summary>
+      <div class="grid" style="margin-top:10px">
+        <div class="f c5"><label for="offset">Diferencia horaria con UTC (solo si quieres corregirla)</label><input type="text" id="offset" placeholder="Automática, p. ej. +01:00" inputmode="text"></div>
+      </div>
+    </details>
+    <div class="actions">
+      <button class="btn" id="calc" type="submit" disabled>Calcular carta</button>
+      <button class="btn-ghost" id="save" type="button">Guardar perfil</button>
+      <span class="err" id="err" role="alert"></span>
+    </div>
+    <div class="profiles" id="profiles" aria-label="Perfiles guardados"></div>
+  </form>
+
+  <section class="result" id="result" aria-live="polite">
+    <div class="modebar">
+      <div class="seg" role="tablist" aria-label="Tipo de carta">
+        <button type="button" role="tab" id="m-natal" aria-selected="true">Carta natal</button>
+        <button type="button" role="tab" id="m-ret" aria-selected="false">Retorno solar</button>
+      </div>
+      <div class="retctl" id="retctl" hidden>
+        <div class="f"><label for="retAnio">Año</label>
+          <div class="yr"><button type="button" class="btn-ghost" id="retMenos" aria-label="Año anterior">‹</button><input type="number" id="retAnio" min="1800" max="2399"><button type="button" class="btn-ghost" id="retMas" aria-label="Año siguiente">›</button></div></div>
+        <div class="f place"><label for="retLugar">Dónde pasas el cumpleaños</label>
+          <input type="text" id="retLugar" placeholder="Igual que el lugar de nacimiento" role="combobox" aria-expanded="false" aria-controls="retSugg" aria-autocomplete="list">
+          <ul class="sugg" id="retSugg" role="listbox" hidden></ul></div>
+      </div>
+    </div>
+    <div class="wheel-card">
+      <div class="whead"><div><span class="badge" id="badge" hidden>Ejemplo</span><h2 id="cName">—</h2></div><div class="meta" id="cMeta"></div></div>
+      <div id="wheel"><p class="loading" style="color:#B9BED0;padding:40px 8px">Preparando el cálculo…</p></div>
+    </div>
+    <div>
+      <div class="triad" id="triad"></div>
+      <div class="tabs" role="tablist" aria-label="Vistas de la carta">
+        <button type="button" role="tab" id="tab-pl" aria-selected="true" aria-controls="pan-pl">Planetas</button>
+        <button type="button" role="tab" id="tab-en" aria-selected="false" aria-controls="pan-en">Energías y aspectos</button>
+      </div>
+      <div id="pan-pl" role="tabpanel" aria-labelledby="tab-pl"><div class="plist" id="plist"></div></div>
+      <div id="pan-en" role="tabpanel" aria-labelledby="tab-en" hidden>
+        <h3 class="sec">Reparto de energías</h3><div id="dist" class="dist"></div>
+        <h3 class="sec">Tabla de aspectos</h3><div class="gridwrap"><table id="agrid" class="agrid"></table></div>
+        <p class="hint">Toca o pasa el cursor por un símbolo para ver el orbe. Verde: armónico · Terracota: tenso · Dorado: conjunción.</p>
+        <h3 class="sec">Ángulos y casas</h3><div id="casas" class="casas"></div>
+      </div>
+      <p class="foot" id="foot"></p>
+    </div>
+  </section>
+</div>
+
+<div class="sheet" id="sheet" hidden role="dialog" aria-modal="true" aria-labelledby="shTitle">
+  <div class="in">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:10px"><h3 id="shTitle"></h3><button class="btn-ghost" id="shClose" type="button">Cerrar</button></div>
+    <p class="soon" id="shSoon"></p>
+    <div id="shLinks" style="display:flex;flex-direction:column;gap:8px"></div>
+  </div>
+</div>
+
+<script type="module">
+import SwissEph from './lib/swisseph/src/swisseph.js';
+
+/* ===== CONFIGURACIÓN (cambiar aquí) ===== */
+const ENCICLOPEDIA = { activa:false, base:'https://astrologico.nucleodigital.studio' }; // URLs: /luna-en-cancer y /luna-en-casa-4
+const PLANES = { actual:'gratis', limite:{ gratis:3, pro:Infinity } };                 // perfiles guardados por plan
+const SISTEMA_CASAS = 'P'; // Placidus
+
+const SIGNOS = ['Aries','Tauro','Géminis','Cáncer','Leo','Virgo','Libra','Escorpio','Sagitario','Capricornio','Acuario','Piscis'];
+const SG = ['♈','♉','♊','♋','♌','♍','♎','♏','♐','♑','♒','♓'].map(s=>s+'\uFE0E');
+const PLANETAS = [
+  {id:0,n:'Sol',g:'☉'},{id:1,n:'Luna',g:'☽'},{id:2,n:'Mercurio',g:'☿'},{id:3,n:'Venus',g:'♀'},{id:4,n:'Marte',g:'♂'},
+  {id:5,n:'Júpiter',g:'♃'},{id:6,n:'Saturno',g:'♄'},{id:7,n:'Urano',g:'♅'},{id:8,n:'Neptuno',g:'♆'},{id:9,n:'Plutón',g:'♇'},
+  {id:11,n:'Nodo Norte',g:'☊'},{id:15,n:'Quirón',g:'⚷'}].map(p=>({...p,g:p.g+'\uFE0E'}));
+const ELEM=['Fuego','Tierra','Aire','Agua'], MODAL=['Cardinal','Fijo','Mutable'];
+// Dignidades: [domicilio, exaltación, exilio, caída] (índices de signo)
+const DIG={0:[[4],[0],[10],[6]],1:[[3],[1],[9],[7]],2:[[2,5],[5],[8,11],[11]],3:[[1,6],[11],[7,0],[5]],4:[[0,7],[9],[6,1],[3]],
+  5:[[8,11],[3],[2,5],[9]],6:[[9,10],[6],[3,4],[0]],7:[[10],[],[4],[]],8:[[11],[],[5],[]],9:[[7],[],[1],[]]};
+function dignidad(id,sg){const d=DIG[id];if(!d)return '';const t=[];if(d[0].includes(sg))t.push('domicilio');if(d[1].includes(sg))t.push('exaltación');if(d[2].includes(sg))t.push('exilio');if(d[3].includes(sg))t.push('caída');return t.length?'En '+t.join(' y '):''}
+// Aspectos: ángulo, orbe, nombre, símbolo, tipo
+const ASPECTOS=[[0,8,'Conjunción','☌','c'],[180,8,'Oposición','☍','t'],[120,7,'Trígono','△','a'],[90,7,'Cuadratura','□','t'],[60,5,'Sextil','⚹','a'],[150,3,'Quincuncio','⚻','t']];
+const ASP_COL={c:'#B8975A',a:'#8FA396',t:'#B5654A'};
+const EJEMPLO = {ejemplo:true,nombre:'Vincent van Gogh',fecha:'1853-03-30',hora:'11:00',sinHora:false,
+  lugar:{name:'Zundert',admin:'Brabante Septentrional',cc:'NL',lat:51.472,lon:4.656,tz:'Europe/Amsterdam'}};
+
+const $=id=>document.getElementById(id);
+const slug=s=>s.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
+const norm=s=>s.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
+let regionName=cc=>cc; try{const dn=new Intl.DisplayNames(['es'],{type:'region'});regionName=cc=>dn.of(cc)||cc}catch(e){}
+const store={get(k,d){try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch(e){return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v));return true}catch(e){return false}}};
+
+/* ===== Zona horaria histórica ===== */
+const dtfCache={};
+function offsetSec(tz,ms){ // desfase (s) de la zona en ese instante UTC, con las reglas históricas de la base IANA
+  const f=dtfCache[tz]||(dtfCache[tz]=new Intl.DateTimeFormat('en-US',{timeZone:tz,hourCycle:'h23',year:'numeric',month:'numeric',day:'numeric',hour:'numeric',minute:'numeric',second:'numeric',era:'short'}));
+  const p={};for(const x of f.formatToParts(new Date(ms)))p[x.type]=x.value;
+  let y=+p.year; if(p.era==='BC')y=1-y;
+  const d=new Date(0);d.setUTCFullYear(y,+p.month-1,+p.day);d.setUTCHours(+p.hour,+p.minute,+p.second,0);
+  return Math.round((d.getTime()-Math.floor(ms/1000)*1000)/1000);
+}
+function localToUtc(y,mo,d,h,mi,tz,lon,manual){
+  const wall=new Date(0);wall.setUTCFullYear(y,mo-1,d);wall.setUTCHours(h,mi,0,0);const W=wall.getTime();
+  if(manual!=null) return {ms:W-manual*1000,off:manual,kind:'manual'};
+  let off=offsetSec(tz,W); let ms=W-off*1000; const off2=offsetSec(tz,ms); if(off2!==off){off=off2;ms=W-off*1000}
+  // Antes de la hora oficial la base IANA usa la hora media de la capital de la zona: usamos la del lugar exacto.
+  const lmtZone=offsetSec(tz,Date.UTC(1700,0,1));
+  if(off===lmtZone){const lmt=Math.round(lon*240);return {ms:W-lmt*1000,off:lmt,kind:'lmt'}}
+  return {ms,off,kind:'tz'};
+}
+const fmtOff=s=>{const sg=s<0?'−':'+';s=Math.abs(s);const h=Math.floor(s/3600),m=Math.floor(s%3600/60),ss=s%60;return `UTC${sg}${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}${ss?':'+String(ss).padStart(2,'0'):''}`};
+function parseOffset(t){t=t.trim().replace('−','-');if(!t)return null;const m=t.match(/^([+-])?(\d{1,2})(?::?(\d{2}))?$/);if(!m)return NaN;const s=(+m[2]*3600+(+m[3]||0)*60)*(m[1]==='-'?-1:1);return Math.abs(s)<=14*3600?s:NaN}
+
+/* ===== Motor ===== */
+let swe=null;
+const ready=(async()=>{swe=new SwissEph();await swe.initSwissEph();})();
+
+const signOf=l=>Math.floor(((l%360)+360)%360/30);
+const degStr=l=>{l=((l%360)+360)%360;const d=l%30;const g=Math.floor(d),m=Math.floor((d-g)*60);return `${g}°${String(m).padStart(2,'0')}′`};
+function houseOf(lon,c){for(let i=1;i<=12;i++){const a=c[i],b=c[i%12+1];const span=((b-a)+360)%360;const x=((lon-a)+360)%360;if(x<span)return i}return 12}
+
+function calcular(p){
+  const [y,mo,d]=p.fecha.split('-').map(Number);const [h,mi]=(p.sinHora?'12:00':p.hora).split(':').map(Number);
+  const t=localToUtc(y,mo,d,h,mi,p.lugar.tz,p.lugar.lon,p.offsetManual??null);
+  const u=new Date(t.ms);
+  const jd=swe.julday(u.getUTCFullYear(),u.getUTCMonth()+1,u.getUTCDate(),u.getUTCHours()+u.getUTCMinutes()/60+u.getUTCSeconds()/3600);
+  return {...cartaDesdeJD(jd,p.lugar,p.sinHora),p,t,tipo:'natal'};
+}
+function cartaDesdeJD(jd,lugar,sinHora){
+  const p={lugar,sinHora};
+  const fl=swe.SEFLG_SWIEPH|swe.SEFLG_SPEED;
+  const planetas=PLANETAS.map(pl=>{const r=swe.calc_ut(jd,pl.id,fl);return {...pl,lon:r[0],vel:r[3]}});
+  let casas=null,asc=null,mc=null,sistema=null;
+  if(!p.sinHora){
+    for(const hs of [SISTEMA_CASAS,'O','W']){try{const hh=swe.houses(jd,p.lugar.lat,p.lugar.lon,hs);if(hh&&hh.cusps&&isFinite(hh.cusps[1])&&hh.cusps[1]!==0||hs==='W'){casas=Array.from(hh.cusps);asc=hh.ascmc[0];mc=hh.ascmc[1];sistema=hs;break}}catch(e){}}
+    planetas.forEach(pl=>pl.casa=houseOf(pl.lon,casas));
+  }
+  // puntos para aspectos: planetas + AC y MC
+  const puntos=planetas.map(x=>({id:x.id,n:x.n,g:x.g,lon:x.lon,vel:x.vel,casa:x.casa}));
+  if(asc!=null){puntos.push({id:'AC',n:'Ascendente',g:'AC',lon:asc,vel:0},{id:'MC',n:'Medio Cielo',g:'MC',lon:mc,vel:0})}
+  const aspectos=[];
+  for(let i=0;i<puntos.length;i++)for(let j=i+1;j<puntos.length;j++){const A=puntos[i],B=puntos[j];if(typeof A.id==='string'&&typeof B.id==='string')continue;
+    let d=Math.abs(A.lon-B.lon);if(d>180)d=360-d;
+    for(const [ang,orb,nom,sym,tipo] of ASPECTOS){const extra=(A.id===0||A.id===1||B.id===0||B.id===1)&&ang!==150?2:0;
+      if(Math.abs(d-ang)<=orb+extra){
+        // aplicativo si la separación se acerca al ángulo exacto
+        const d2=(()=>{let x=Math.abs((A.lon+A.vel/24)-(B.lon+B.vel/24));if(x>180)x=360-x;return x})();
+        aspectos.push({a:A,b:B,ang,nom,sym,tipo,sep:d,orbe:Math.abs(d-ang),aplica:Math.abs(d2-ang)<Math.abs(d-ang)});break}}}
+  return {jd,planetas,casas,asc,mc,sistema,puntos,aspectos};
+}
+
+/* ===== Retorno solar ===== */
+const jdToMs=jd=>(jd-2440587.5)*86400000;
+function retornoSolar(natal,anio,lugar){
+  const [,mo,d]=natal.p.fecha.split('-').map(Number);
+  const inicio=swe.julday(anio,mo,d,0)-4; // busca desde 4 días antes del cumpleaños
+  const jd=swe.solcross_ut(natal.planetas[0].lon,inicio,swe.SEFLG_SWIEPH);
+  const c=cartaDesdeJD(jd,lugar,false);
+  c.tipo='retorno';c.anio=anio;c.natal=natal;c.lugar=lugar;
+  const ms=jdToMs(jd);c.off=offsetSec(lugar.tz,ms);c.local=new Date(ms+c.off*1000);
+  if(natal.casas)c.planetas.forEach(pl=>pl.casaNatal=houseOf(pl.lon,natal.casas));
+  if(natal.casas&&c.asc!=null)c.ascCasaNatal=houseOf(c.asc,natal.casas);
+  return c;
+}
+
+/* ===== Rueda (SVG) ===== */
+const NS='http://www.w3.org/2000/svg';
+function el(tag,attrs,parent,text){const e=document.createElementNS(NS,tag);for(const k in attrs)e.setAttribute(k,attrs[k]);if(text!=null)e.textContent=text;parent&&parent.appendChild(e);return e}
+function dibujar(c){
+  const S=676,C=S/2,R0=308,R1=266,R2=262,R3=150,R4=126;
+  const GOLD='#B8975A',CRE='#F5EFE6',DIM='rgba(245,239,230,.55)';
+  const rot=c.asc??0; // el Ascendente siempre a la izquierda
+  const P=(lon,r)=>{const a=Math.PI+(lon-rot)*Math.PI/180;return [C+r*Math.cos(a),C-r*Math.sin(a)]};
+  const svg=el('svg',{viewBox:`0 0 ${S} ${S}`,role:'img','aria-label':'Rueda de la carta natal'});
+  // anillos
+  el('circle',{cx:C,cy:C,r:R0,fill:'none',stroke:GOLD,'stroke-width':1.2},svg);
+  el('circle',{cx:C,cy:C,r:R1,fill:'none',stroke:GOLD,'stroke-width':.8},svg);
+  el('circle',{cx:C,cy:C,r:R3,fill:'none',stroke:GOLD,'stroke-opacity':.5,'stroke-width':.8},svg);
+  el('circle',{cx:C,cy:C,r:R4,fill:'none',stroke:CRE,'stroke-opacity':.85,'stroke-width':3,'stroke-dasharray':'22 9'},svg);
+  // marcas de grados
+  for(let i=0;i<360;i++){const len=i%10===0?9:i%5===0?6:3.5;const [x1,y1]=P(i,R1),[x2,y2]=P(i,R1+len);el('line',{x1,y1,x2,y2,stroke:GOLD,'stroke-opacity':i%5?0.45:0.8,'stroke-width':.7},svg)}
+  // signos
+  for(let s=0;s<12;s++){const [x1,y1]=P(s*30,R1),[x2,y2]=P(s*30,R0);el('line',{x1,y1,x2,y2,stroke:GOLD,'stroke-width':.9},svg);
+    const [tx,ty]=P(s*30+15,(R0+R1)/2+5);el('text',{x:tx,y:ty,'text-anchor':'middle','dominant-baseline':'central',fill:GOLD,'font-size':24,'font-family':'Noto Sans Symbols, Segoe UI Symbol, sans-serif'},svg,SG[s])}
+  // casas
+  if(c.casas){
+    for(let i=1;i<=12;i++){const ang=i===1||i===4||i===7||i===10;const [x1,y1]=P(c.casas[i],R4+4),[x2,y2]=P(c.casas[i],R1);
+      el('line',{x1,y1,x2,y2,stroke:ang?GOLD:CRE,'stroke-opacity':ang?1:.22,'stroke-width':ang?1.4:.8},svg);
+      const nx=c.casas[i%12+1];const mid=c.casas[i]+(((nx-c.casas[i])+360)%360)/2;const [hx,hy]=P(mid,R3-12);
+      el('text',{x:hx,y:hy,'text-anchor':'middle','dominant-baseline':'central',fill:DIM,'font-size':11,'font-family':'Inter, sans-serif'},svg,String(i))}
+    for(const [lon,lab] of [[c.asc,'AC'],[c.mc,'MC']]){const [x,y]=P(lon,R0+16);el('text',{x,y,'text-anchor':'middle','dominant-baseline':'central',fill:GOLD,'font-size':12,'font-weight':600,'letter-spacing':1,'font-family':'Inter, sans-serif'},svg,lab)}
+  }
+  // aspectos (solo mayores, finos)
+  for(const a of c.aspectos){if(a.ang===0||typeof a.a.id==='string'||typeof a.b.id==='string'||a.a.id>9||a.b.id>9)continue;
+    const [x1,y1]=P(a.a.lon,R4-6),[x2,y2]=P(a.b.lon,R4-6);el('line',{x1,y1,x2,y2,stroke:ASP_COL[a.tipo],'stroke-opacity':a.orbe<2?.95:.6,'stroke-width':a.orbe<2?1.4:.9,'stroke-dasharray':a.ang===150?'3 3':'none'},svg)}
+  // planetas con separación para que no se pisen
+  const items=c.planetas.map(p=>({p,a:p.lon})).sort((a,b)=>a.a-b.a);const MIN=10.5;
+  for(let pass=0;pass<40;pass++){let moved=false;for(let i=0;i<items.length;i++){const A=items[i],B=items[(i+1)%items.length];let d=((B.a-A.a)+360)%360;if(items.length>1&&d<MIN){const push=(MIN-d)/2;A.a-=push;B.a+=push;moved=true}}if(!moved)break}
+  const g=el('g',{class:'pl'},svg);
+  for(const it of items){const p=it.p;const big=p.id<=1;const [tx,ty]=P(it.a,R2-42);
+    const [m1x,m1y]=P(p.lon,R1),[m2x,m2y]=P(p.lon,R1-7);el('line',{x1:m1x,y1:m1y,x2:m2x,y2:m2y,stroke:CRE,'stroke-width':1.4},g);
+    const [l1x,l1y]=P(p.lon,R1-8),[l2x,l2y]=P(it.a,R2-58+44);el('line',{x1:l1x,y1:l1y,x2:l2x,y2:l2y,stroke:CRE,'stroke-opacity':.25,'stroke-width':.7},g);
+    el('text',{x:tx,y:ty,'text-anchor':'middle','dominant-baseline':'central',fill:big?GOLD:CRE,'font-size':big?30:25,'font-family':'Noto Sans Symbols, Segoe UI Symbol, sans-serif'},g,p.g);
+    const [dx,dy]=P(it.a,R2-72);el('text',{x:dx,y:dy,'text-anchor':'middle','dominant-baseline':'central',fill:DIM,'font-size':12,'font-family':'Inter, sans-serif'},g,String(Math.floor(((p.lon%30)+30)%30))+'°')}
+  el('circle',{cx:C,cy:C,r:9,fill:GOLD},svg);
+  return svg;
+}
+
+/* ===== Pintar resultado ===== */
+let actual=null;
+function pintar(c){
+  actual=c;const N=c.tipo==='retorno'?c.natal:c;const p=N.p;
+  $('badge').hidden=!p.ejemplo;
+  let lineas;
+  if(c.tipo==='retorno'){
+    $('cName').textContent=`Retorno solar ${c.anio}`;
+    const L=c.local;const f=L.toLocaleDateString('es',{day:'numeric',month:'long',year:'numeric',timeZone:'UTC'});
+    const h=`${String(L.getUTCHours()).padStart(2,'0')}:${String(L.getUTCMinutes()).padStart(2,'0')}`;
+    lineas=[`${p.nombre||'Tu carta'}`,`${f} · ${h} (${fmtOff(c.off)})`,`${c.lugar.name}, ${regionName(c.lugar.cc)}`];
+  }else{
+    $('cName').textContent=p.nombre||'Tu carta';
+    const f=new Date(p.fecha+'T12:00:00Z').toLocaleDateString('es',{day:'numeric',month:'long',year:'numeric',timeZone:'UTC'});
+    lineas=[f+(p.sinHora?' · hora desconocida':' · '+p.hora),`${p.lugar.name}, ${regionName(p.lugar.cc)}`];
+  }
+  $('cMeta').innerHTML='';lineas.forEach(t=>{const d=document.createElement('div');d.textContent=t;$('cMeta').appendChild(d)});
+  $('wheel').replaceChildren(dibujar(c));
+  const sol=c.planetas[0],luna=c.planetas[1];
+  const tri=[{k:'Sol',g:sol.g,lon:sol.lon,slugP:'sol'},{k:'Luna',g:luna.g,lon:luna.lon,slugP:'luna'}];
+  if(c.asc!=null)tri.push({k:'Ascendente',g:'AC',lon:c.asc,slugP:'ascendente'});
+  $('triad').replaceChildren(...tri.map(t=>{const d=document.createElement('div');d.className='tri';
+    d.innerHTML=`<span class="g" aria-hidden="true">${t.g==='AC'?'<span style="font:600 17px var(--f-text);letter-spacing:.06em">AC</span>':t.g}</span><span class="k">${t.k}</span><span class="s">${SIGNOS[signOf(t.lon)]}</span><span class="d">${degStr(t.lon)}</span>`;return d}));
+  if(c.tipo==='retorno'&&c.ascCasaNatal){const d=$('triad').lastChild.querySelector('.d');d.textContent+=` · en tu casa natal ${c.ascCasaNatal}`}
+  if(c.asc==null){const d=document.createElement('div');d.className='tri';d.innerHTML='<span class="k">Ascendente</span><span class="d">Necesita la hora de nacimiento</span>';$('triad').appendChild(d)}
+  const nodos=[];
+  for(const pl of c.planetas){const sg=signOf(pl.lon);const dg=dignidad(pl.id,sg);const rx=pl.vel<0&&pl.id!==11;
+    const r=document.createElement('div');r.className='prow';r.tabIndex=0;r.setAttribute('role','button');r.setAttribute('aria-expanded','false');
+    r.innerHTML=`<span class="g" aria-hidden="true">${pl.g}</span><div><div class="n">${pl.n}${rx?'<span class="rx" title="Retrógrado">R</span>':''}<span class="chev" aria-hidden="true">▸</span></div><div class="sub">${SIGNOS[sg]} ${degStr(pl.lon)}${pl.casa?' · Casa '+pl.casa:''}${pl.casaNatal?' · en tu casa natal '+pl.casaNatal:''}${dg?' · <span class="dig">'+dg+'</span>':''}</div></div>`;
+    const b=document.createElement('button');b.type='button';b.className='more';b.textContent='Leer más';b.setAttribute('aria-label',`Leer más sobre ${pl.n} en ${SIGNOS[sg]}`);
+    b.onclick=e=>{e.stopPropagation();leerMas(pl.n,SIGNOS[sg],pl.casa,c.tipo==='retorno')};r.appendChild(b);
+    const det=document.createElement('div');det.className='pdet';det.hidden=true;
+    const asp=c.aspectos.filter(x=>x.a.id===pl.id||x.b.id===pl.id).sort((x,y)=>x.orbe-y.orbe);
+    const vel=Math.abs(pl.vel);
+    det.innerHTML=`<div class="info">${ELEM[sg%4]} · ${MODAL[sg%3]} · ${rx?'Retrógrado':'Directo'} · ${vel.toFixed(vel<1?3:2)}° por día</div>`+
+      (asp.length?asp.map(x=>{const o=x.a.id===pl.id?x.b:x.a;const os=signOf(o.lon);
+        return `<div class="asp"><span class="g" style="color:${ASP_COL[x.tipo]}" aria-hidden="true">${x.sym}︎</span><div>${x.nom} con ${o.n} · orbe ${degStr(x.orbe)} ${x.aplica?'aplicativo':'separativo'}<small>${o.n} en ${SIGNOS[os]} ${degStr(o.lon)}${o.casa?' · Casa '+o.casa:''}</small></div></div>`}).join('')
+      :'<div class="info">Sin aspectos mayores dentro de orbe.</div>');
+    const tog=()=>{const open=det.hidden;det.hidden=!open;r.setAttribute('aria-expanded',open)};
+    r.onclick=tog;r.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();tog()}};
+    nodos.push(r,det)}
+  $('plist').replaceChildren(...nodos);
+  pintarEnergias(c);
+  const tzTxt=c.tipo==='retorno'?`${c.lugar.tz}, ${fmtOff(c.off)}`:c.t.kind==='lmt'?`hora media local del lugar (${fmtOff(c.t.off)}), porque en esa fecha aún no había hora oficial`:c.t.kind==='manual'?`diferencia indicada a mano (${fmtOff(c.t.off)})`:`${p.lugar.tz}, ${fmtOff(c.t.off)} en esa fecha`;
+  const casasTxt=c.sistema?{P:'Placidus',O:'Porfirio (Placidus no funciona a esta latitud)',W:'signos enteros'}[c.sistema]:'sin casas (falta la hora)';
+  $('foot').textContent=`${c.tipo==='retorno'?`Retorno solar: momento exacto en que el Sol vuelve a ${degStr(c.natal.planetas[0].lon)} de ${SIGNOS[signOf(c.natal.planetas[0].lon)]}, calculado para el lugar donde pasas el cumpleaños.${c.natal.p.sinHora?' Sin hora de nacimiento, el momento puede variar hasta medio día y las casas no son fiables.':''} · `:''}Zodiaco tropical · Casas: ${casasTxt} · Zona horaria: ${tzTxt}. Calculado con Swiss Ephemeris ${swe.version()} en tu dispositivo.`;
+}
+
+function pintarEnergias(c){
+  // Reparto: 10 planetas + Ascendente; Sol, Luna y Ascendente cuentan doble
+  const pts=c.planetas.filter(x=>x.id<=9).map(x=>({g:x.g,lon:x.lon,w:x.id<=1?2:1}));if(c.asc!=null)pts.push({g:'AC',lon:c.asc,w:2});
+  const grupo=(titulo,nombres,fn,cols)=>{const tot=nombres.map(()=>({n:0,who:[]}));pts.forEach(p=>{const k=fn(signOf(p.lon));tot[k].n+=p.w;tot[k].who.push(p.g)});
+    const max=Math.max(...tot.map(t=>t.n),1);
+    return `<div class="dgroup"><div class="lbl">${titulo}</div>`+nombres.map((nm,i)=>`<div class="drow"><span>${nm}</span><span class="bar"><i style="width:${tot[i].n/max*100}%;background:${cols[i]}"></i></span><span class="num">${tot[i].n}</span><span class="who">${tot[i].who.join(' ')}</span></div>`).join('')+'</div>'};
+  $('dist').innerHTML=grupo('Elemento',ELEM,s=>s%4,['#B5654A','#B8975A','#8FA396','#4A6286'])+
+    grupo('Modalidad',MODAL,s=>s%3,['#B8975A','#101B33','#8FA396'].map(x=>x==='#101B33'?'var(--fg)':x))+
+    grupo('Polaridad',['Positiva (yang)','Negativa (yin)'],s=>s%2,['#B8975A','#8FA396'])+
+    '<p class="hint" style="margin:0">Cuentan los 10 planetas y el Ascendente; Sol, Luna y Ascendente valen doble.</p>';
+  // Tabla triangular de aspectos
+  const pp=c.puntos;const t=$('agrid');t.replaceChildren();
+  for(let i=0;i<pp.length;i++){const tr=document.createElement('tr');
+    for(let j=0;j<i;j++){const td=document.createElement('td');const x=c.aspectos.find(a=>(a.a===pp[i]&&a.b===pp[j])||(a.a===pp[j]&&a.b===pp[i]));
+      if(x){td.className='a';td.textContent=x.sym+'︎';td.style.color=ASP_COL[x.tipo];td.title=`${pp[i].n} ${x.nom.toLowerCase()} ${pp[j].n} · orbe ${degStr(x.orbe)}`;td.setAttribute('aria-label',td.title);td.tabIndex=0}
+      tr.appendChild(td)}
+    const th=document.createElement('th');th.scope='row';th.textContent=pp[i].g;th.title=pp[i].n;if(typeof pp[i].id==='string')th.style.font='600 10px var(--f-text)';tr.appendChild(th);t.appendChild(tr)}
+  // Ángulos y casas
+  if(c.casas){const ang=[['AC',c.asc],['MC',c.mc],['DC',c.asc+180],['FC',c.mc+180]];
+    $('casas').innerHTML=ang.map(([k,l])=>`<div><b>${k}</b><span>${SIGNOS[signOf(l)]} ${degStr(l)}</span></div>`).join('')+
+      c.casas.slice(1,13).map((l,i)=>`<div><b>Casa ${i+1}</b><span>${SIGNOS[signOf(l)].slice(0,3)} ${degStr(l)}</span></div>`).join('')}
+  else $('casas').innerHTML='<p class="hint">Las casas y los ángulos necesitan la hora de nacimiento.</p>';
+}
+function tab(on){for(const [b,pn] of [['tab-pl','pan-pl'],['tab-en','pan-en']]){const sel=b===on;$(b).setAttribute('aria-selected',sel);$(pn).hidden=!sel}}
+$('tab-pl').onclick=()=>tab('tab-pl');$('tab-en').onclick=()=>tab('tab-en');
+
+/* ===== Leer más (preparado para la enciclopedia) ===== */
+function leerMas(planeta,signo,casa,ret){const pre=ret?'/retorno-solar':'';
+  const links=[[`${planeta} en ${signo}${ret?' (retorno solar)':''}`,`${pre}/${slug(planeta)}-en-${slug(signo)}`]];
+  if(casa)links.push([`${planeta} en casa ${casa}${ret?' (retorno solar)':''}`,`${pre}/${slug(planeta)}-en-casa-${casa}`]);
+  $('shTitle').textContent=`${planeta} en ${signo}`;
+  $('shSoon').textContent=ENCICLOPEDIA.activa?'Abre la entrada de la enciclopedia:':'La enciclopedia todavía no está conectada. Estas serán sus direcciones:';
+  $('shLinks').replaceChildren(...links.map(([t,path])=>{const a=document.createElement('a');a.className='lnk';a.href=ENCICLOPEDIA.base+path;a.target='_blank';a.rel='noopener';
+    if(!ENCICLOPEDIA.activa)a.addEventListener('click',e=>e.preventDefault());a.innerHTML=`<b></b><span></span>`;a.querySelector('b').textContent=t;a.querySelector('span').textContent=path;return a}));
+  $('sheet').hidden=false;$('shClose').focus();
+}
+$('shClose').onclick=()=>$('sheet').hidden=true;
+document.addEventListener('keydown',e=>{if(e.key==='Escape')$('sheet').hidden=true});
+
+/* ===== Ciudades (sin conexión a servicios externos) ===== */
+let CIUDADES=null,TZ=[],AD=[];
+fetch('./data/ciudades.txt').then(r=>{if(!r.ok)throw 0;return r.text()}).then(txt=>{
+  const nl=txt.indexOf('\n');const head=JSON.parse(txt.slice(0,nl));TZ=head.tz;AD=head.ad.map(s=>s.split('|'));
+  CIUDADES=txt.slice(nl+1).split('\n').map(l=>{const a=l.split('|');return {n:a[0],k:norm(a[0]),ad:+a[1],lat:+a[2],lon:+a[3],tz:+a[4]}});
+  $('lugarHint').textContent=`${CIUDADES.length.toLocaleString('es')} ciudades y pueblos disponibles sin conexión.`;
+}).catch(()=>{$('lugarHint').textContent='No se pudo cargar la lista de ciudades. Recarga la página.'});
+
+let sel=null,retSel=null;
+function buscar(q){q=norm(q.trim());if(!CIUDADES||q.length<2)return [];const [cq,rq]=q.split(',').map(s=>s.trim());const out=[];
+  for(const c of CIUDADES){if(c.k.startsWith(cq)||c.k.includes(' '+cq)||c.k.includes('-'+cq)){if(rq){const [cc,adm]=AD[c.ad];if(!norm(adm+' '+regionName(cc)).includes(rq))continue}out.push(c);if(out.length>=8)break}}
+  if(out.length<8&&cq.length>=3)for(const c of CIUDADES){if(!out.includes(c)&&c.k.includes(cq)){out.push(c);if(out.length>=8)break}}
+  return out}
+function toLugar(c){const [cc,adm]=AD[c.ad];return {name:c.n,admin:adm,cc,lat:c.lat,lon:c.lon,tz:TZ[c.tz]}}
+const lugarLabel=l=>`${l.name}${l.admin&&l.admin!==l.name?', '+l.admin:''} · ${regionName(l.cc)}`;
+function autocompletar(inp,list,pick){let opts=[],cur=-1;const I=$(inp),U=$(list);
+  const render=()=>{U.replaceChildren(...opts.map((c,i)=>{const l=toLugar(c);const li=document.createElement('li');li.id=list+i;li.setAttribute('role','option');li.setAttribute('aria-selected',i===cur);
+    li.innerHTML='<span></span><small></small>';li.firstChild.textContent=l.name+(l.admin&&l.admin!==l.name?', '+l.admin:'');li.lastChild.textContent=regionName(l.cc);
+    li.onmousedown=e=>{e.preventDefault();elegir(i)};return li}));U.hidden=!opts.length;I.setAttribute('aria-expanded',!!opts.length);
+    if(cur>=0)I.setAttribute('aria-activedescendant',list+cur);else I.removeAttribute('aria-activedescendant')};
+  const elegir=i=>{const l=toLugar(opts[i]);I.value=lugarLabel(l);opts=[];cur=-1;render();pick(l)};
+  I.addEventListener('input',e=>{pick(null,true);opts=buscar(e.target.value);cur=opts.length?0:-1;render()});
+  I.addEventListener('keydown',e=>{if(U.hidden)return;if(e.key==='ArrowDown'){cur=Math.min(cur+1,opts.length-1);render();e.preventDefault()}else if(e.key==='ArrowUp'){cur=Math.max(cur-1,0);render();e.preventDefault()}else if(e.key==='Enter'&&cur>=0){elegir(cur);e.preventDefault()}else if(e.key==='Escape'){opts=[];render()}});
+  I.addEventListener('blur',()=>setTimeout(()=>{opts=[];render()},120));}
+autocompletar('lugar','sugg',(l)=>{sel=l;if(l)$('err').textContent=''});
+autocompletar('retLugar','retSugg',(l,typing)=>{if(typing){if(!$('retLugar').value.trim()){retSel=null;mostrar()}return}retSel=l;mostrar()});
+
+/* ===== Natal / Retorno ===== */
+let natal=null,modo='natal';
+const anioActual=new Date().getFullYear();
+function mostrar(){if(!natal)return;
+  if(modo==='natal'){pintar(natal);return}
+  let y=+$('retAnio').value;const ny=+natal.p.fecha.slice(0,4);
+  if(!(y>ny))y=Math.max(ny+1,anioActual);y=Math.min(y,2398);$('retAnio').value=y;
+  pintar(retornoSolar(natal,y,retSel||natal.p.lugar))}
+function setModo(m){modo=m;$('m-natal').setAttribute('aria-selected',m==='natal');$('m-ret').setAttribute('aria-selected',m==='retorno');$('retctl').hidden=m!=='retorno';mostrar()}
+$('m-natal').onclick=()=>setModo('natal');$('m-ret').onclick=()=>setModo('retorno');
+$('retAnio').addEventListener('change',mostrar);
+$('retMenos').onclick=()=>{$('retAnio').value=+$('retAnio').value-1;mostrar()};$('retMas').onclick=()=>{$('retAnio').value=+$('retAnio').value+1;mostrar()};
+function nuevaNatal(c){natal=c;retSel=null;$('retLugar').value='';$('retAnio').value=Math.max(+c.p.fecha.slice(0,4)+1,anioActual);mostrar()}
+$('sinHora').addEventListener('change',e=>{$('hora').disabled=e.target.checked});
+
+/* ===== Formulario ===== */
+function leerForm(){
+  const fecha=$('fecha').value,hora=$('hora').value,sinHora=$('sinHora').checked;
+  if(!fecha)return 'Falta la fecha de nacimiento.';
+  const y=+fecha.slice(0,4);if(y<1800||y>2399)return 'La fecha debe estar entre 1800 y 2399.';
+  if(!sinHora&&!hora)return 'Falta la hora. Si no la sabes, marca “No sé la hora exacta”.';
+  if(!sel)return 'Elige el lugar de la lista de sugerencias.';
+  const off=parseOffset($('offset').value);if(Number.isNaN(off))return 'La diferencia horaria debe tener el formato +01:00 o -05:00.';
+  return {nombre:$('nombre').value.trim(),fecha,hora,sinHora,lugar:sel,offsetManual:off};
+}
+function llenarForm(p){$('nombre').value=p.ejemplo?'':p.nombre;$('fecha').value=p.ejemplo?'':p.fecha;$('hora').value=p.ejemplo?'':p.hora;$('sinHora').checked=!!p.sinHora;$('hora').disabled=!!p.sinHora;
+  sel=p.ejemplo?null:p.lugar;$('lugar').value=p.ejemplo?'':lugarLabel(p.lugar);$('offset').value=p.offsetManual!=null?fmtOff(p.offsetManual).slice(3).replace('−','-'):''}
+$('form').addEventListener('submit',e=>{e.preventDefault();const p=leerForm();if(typeof p==='string'){$('err').textContent=p;return}$('err').textContent='';
+  nuevaNatal(calcular(p));$('result').scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'})});
+$('toNew').onclick=()=>{$('form').reset();sel=null;$('hora').disabled=false;$('nombre').focus();window.scrollTo({top:0})};
+
+/* ===== Perfiles (en este dispositivo) ===== */
+const limite=()=>PLANES.limite[PLANES.actual];
+function perfiles(){return store.get('nucleo.perfiles',[])}
+function pintarPerfiles(){const ps=perfiles();const box=$('profiles');box.replaceChildren();
+  if(!ps.length){const s=document.createElement('span');s.className='quota';s.textContent=`Guarda hasta ${limite()} perfiles gratis en este dispositivo.`;box.appendChild(s);return}
+  ps.forEach(p=>{const c=document.createElement('span');c.className='chip';c.tabIndex=0;c.setAttribute('role','button');c.textContent=p.nombre||p.fecha;
+    c.onclick=()=>{llenarForm(p);nuevaNatal(calcular(p))};c.onkeydown=e=>{if(e.key==='Enter')c.click()};
+    const x=document.createElement('button');x.type='button';x.className='x';x.textContent='×';x.setAttribute('aria-label',`Quitar perfil ${p.nombre||p.fecha}`);
+    x.onclick=e=>{e.stopPropagation();store.set('nucleo.perfiles',perfiles().filter(q=>q.id!==p.id));pintarPerfiles()};c.appendChild(x);box.appendChild(c)});
+  const q=document.createElement('span');q.className='quota';q.innerHTML=isFinite(limite())?`${ps.length} de ${limite()} perfiles · ilimitados con <span class="pro">Pro</span>`:`${ps.length} perfiles`;box.appendChild(q)}
+$('save').onclick=()=>{const p=leerForm();if(typeof p==='string'){$('err').textContent=p;return}
+  const ps=perfiles();if(ps.length>=limite()){$('err').textContent=`Has llegado a ${limite()} perfiles, el máximo de la versión gratuita. Con Pro podrás guardar todos los que quieras.`;return}
+  if(!p.nombre){$('err').textContent='Ponle un nombre para guardarlo.';$('nombre').focus();return}
+  ps.push({...p,id:Date.now().toString(36)});if(!store.set('nucleo.perfiles',ps)){$('err').textContent='Este navegador no permite guardar datos.';return}
+  $('err').textContent='';pintarPerfiles()};
+
+/* ===== Arranque ===== */
+pintarPerfiles();
+ready.then(()=>{$('calc').disabled=false;nuevaNatal(calcular(EJEMPLO))}).catch(err=>{console.error(err);$('wheel').innerHTML='<p class="loading" style="color:#F5EFE6;padding:40px 8px">No se pudo iniciar el motor de cálculo en este navegador.</p>'});
+</script>
