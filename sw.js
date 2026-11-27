@@ -1,6 +1,6 @@
 /* Service worker de Núcleo Carta Natal: guarda la app para que funcione sin conexión.
    Al publicar cambios, sube el número de VERSION para que los teléfonos descarguen la nueva. */
-const VERSION = 'v2';
+const VERSION = 'v3';
 const CACHE = 'carta-natal-' + VERSION;
 const ARCHIVOS = [
   './',

@@ -198,6 +198,8 @@ h3.sec{font-size:20px;margin:22px 0 10px}
 .lectura b{font-weight:600}
 ul.vin{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:6px;font-size:14px;line-height:1.55}
 ul.vin li::marker{color:var(--dorado)}
+ul.vin li.tuyo{list-style:none;background:color-mix(in srgb,var(--dorado) 13%,transparent);border-radius:10px;padding:8px 10px;margin-left:-4px}
+.tutag{display:inline-block;font:600 10px/1 var(--f-text);letter-spacing:.12em;text-transform:uppercase;color:var(--noche);background:var(--dorado);border-radius:999px;padding:4px 7px;margin-right:6px;vertical-align:1px}
 .completa .txt.lectura h4{font-size:16px}
 .tri{font:inherit;color:inherit;text-align:left;cursor:pointer}
 .tri:hover{border-color:var(--accent)}
@@ -555,12 +557,18 @@ function partes(txt){const lineas=txt.split('\n').map(x=>x.trim()).filter(Boolea
   const i=lineas.findIndex(l=>/^palabras clave:/i.test(l));if(i>=0){kw=lineas[i].replace(/^palabras clave:\s*/i,'');lineas.splice(i,1)}
   return {texto:lineas,kw}}
 // Texto extendido: títulos de sección, párrafos y viñetas (•)
-function nodoPro(txt,principal){const f=document.createDocumentFragment();let lineas=txt.split('\n').map(x=>x.trim()).filter(Boolean);
+// ¿Esta viñeta habla del grado de la persona? Lee lo que va antes de " · ": "0°–9°", "13° o 26°", "8°–9° o 21°–22°", "29°"…
+function esSuGrado(linea,grado){if(grado==null)return false;const i=linea.indexOf(' · ');if(i<0||i>24)return false;
+  const cab=linea.slice(0,i);if(!/^\d+°/.test(cab))return false;const orbe=/orbe de 1°/.test(linea);const g=Math.floor(grado);
+  return cab.split(/\s+o\s+/).some(t=>{const m=t.match(/^(\d+)°(?:\s*[–-]\s*(\d+)°)?$/);if(!m)return false;const a=+m[1];
+    if(m[2]!=null)return g>=a&&g<=+m[2];return orbe?Math.abs(grado-a)<=1:g===a})}
+function nodoPro(txt,principal,grado){const f=document.createDocumentFragment();let lineas=txt.split('\n').map(x=>x.trim()).filter(Boolean);
   if(lineas[0]&&lineas[0].includes(' · '))lineas=lineas.slice(1); // la primera línea repite el título
   let ul=null,primero=principal;
   const conEtiqueta=(el,t,max)=>{const i=t.indexOf(':');if(i>0&&i<=max){const b=document.createElement('b');b.textContent=t.slice(0,i+1);el.append(b,t.slice(i+1))}else el.textContent=t};
   for(const l of lineas){
-    if(/^[•·\-]\s*/.test(l)){if(!ul){ul=document.createElement('ul');ul.className='vin';f.appendChild(ul)}const li=document.createElement('li');conEtiqueta(li,l.replace(/^[•·\-]\s*/,''),48);ul.appendChild(li);continue}
+    if(/^[•·\-]\s*/.test(l)){if(!ul){ul=document.createElement('ul');ul.className='vin';f.appendChild(ul)}const li=document.createElement('li');const lt=l.replace(/^[•·\-]\s*/,'');conEtiqueta(li,lt,48);
+      if(esSuGrado(lt,grado)){li.classList.add('tuyo');const tg=document.createElement('span');tg.className='tutag';tg.textContent='Tu grado';li.prepend(tg)}ul.appendChild(li);continue}
     ul=null;
     if(/^palabras clave:/i.test(l)){const p=document.createElement('p');p.className='kw';conEtiqueta(p,l,20);f.appendChild(p);continue}
     if(l.length<=70&&!/[.?!…:;,]$/.test(l)){const h=document.createElement('h4');h.textContent=l;f.appendChild(h);continue}
@@ -596,11 +604,13 @@ function leerMas(c,pl){
   // Pintar
   $('shTipo').textContent=tipo;
   $('shTitle').textContent=(tema(principal.ruta)||{}).t||principal.titulo;
+  const grado=((pl.lon%30)+30)%30;const dec=Math.min(2,Math.floor(grado/10));
   const pz=[['Personaje',pl.n,esAC?'':pl.g]];pz.push(['Energía',signo,SG[sg]]);if(casa)pz.push(['Escenario',`Casa ${ROMANO[casa]}${ret?' del retorno':''}`,'']);
+  pz.push(['Grado',`${degStr(pl.lon)}${!esAC&&pl.vel<0&&pl.id!==11?' R':''}`,'']);pz.push(['Decanato',`${['1.º','2.º','3.º'][dec]} · ${SIGNOS[(sg+4*dec)%12]}`,'']);
   $('shPiezas').replaceChildren(...pz.map(([k,v,g])=>{const s=document.createElement('span');s.className='pieza';s.innerHTML=`${k}${g?' <span class="g" aria-hidden="true"></span>':''} <b></b>`;if(g)s.querySelector('.g').textContent=g;s.querySelector('b').textContent=v;return s}));
   const body=$('shBody');body.replaceChildren();const t=tema(principal.ruta);const tp=textoPro(principal.ruta);
   body.classList.toggle('lectura',!!tp);
-  if(tp)body.appendChild(nodoPro(tp,true));
+  if(tp)body.appendChild(nodoPro(tp,true,grado));
   else if(t&&t.g)body.appendChild(nodoTexto(t.g,true));
   else if(!(t&&t.s)){const p=document.createElement('p');p.className='vacio';p.textContent='Próximamente. Este texto de la enciclopedia aún se está escribiendo.';body.appendChild(p)}
   if(esPro()&&!tp&&t&&t.g){const p=document.createElement('p');p.className='hint';p.style.margin='0';p.textContent='La versión extendida de este tema aún se está escribiendo.';body.appendChild(p)}
@@ -616,7 +626,7 @@ function leerMas(c,pl){
     const tmp=textoPro(m.ruta);
     const sm=su.lastChild;if(tmp||(tm&&tm.g)){sm.textContent='Leer';sm.className='ok'}else sm.textContent=tm&&tm.p&&!esPro()?'Pro':'Próximamente';
     const tx=document.createElement('div');tx.className='txt';
-    if(tmp){tx.classList.add('lectura');tx.appendChild(nodoPro(tmp,false))}else if(tm&&tm.g)tx.appendChild(nodoTexto(tm.g,false));else{const p=document.createElement('p');p.className='hint';p.textContent=tm&&tm.p?'Disponible en la versión Pro.':'Aún no está escrito.';tx.appendChild(p)}
+    if(tmp){tx.classList.add('lectura');tx.appendChild(nodoPro(tmp,false,grado))}else if(tm&&tm.g)tx.appendChild(nodoTexto(tm.g,false));else{const p=document.createElement('p');p.className='hint';p.textContent=tm&&tm.p?'Disponible en la versión Pro.':'Aún no está escrito.';tx.appendChild(p)}
     if(ENCICLOPEDIA.activa){const a=document.createElement('a');a.href=ENCICLOPEDIA.base+m.ruta;a.target='_blank';a.rel='noopener';a.textContent='Abrir en la enciclopedia';a.className='hint';tx.appendChild(a)}
     d.append(su,tx);box.appendChild(d)}
   box.hidden=!mas.length;
