@@ -160,6 +160,7 @@ h3.sec{font-size:20px;margin:22px 0 10px}
 @media (min-width:520px){.casas{grid-template-columns:repeat(3,minmax(0,1fr))}}
 .casas div{display:flex;justify-content:space-between;gap:8px;border-bottom:1px dotted var(--line);padding:5px 0}
 .casas b{font-weight:500}
+.casas .leer{cursor:pointer}.casas .leer span{color:var(--accent);text-decoration:underline;text-underline-offset:3px;text-decoration-color:color-mix(in srgb,var(--accent) 40%,transparent)}
 .foot{font-size:12px;color:var(--muted);margin-top:14px;line-height:1.6}
 .foot code{font-size:11.5px}
 
@@ -167,8 +168,32 @@ h3.sec{font-size:20px;margin:22px 0 10px}
 .sheet{position:fixed;inset:auto 0 0 0;z-index:20;background:var(--surface);border-top:1px solid var(--line);
   box-shadow:0 -14px 40px rgba(16,27,51,.18);border-radius:18px 18px 0 0;
   padding:20px max(20px, env(safe-area-inset-right,0px)) calc(20px + env(safe-area-inset-bottom,0px)) max(20px, env(safe-area-inset-left,0px))}
-.sheet .in{max-width:620px;margin:0 auto;display:flex;flex-direction:column;gap:10px}
-.sheet h3{font-size:24px}
+.sheet{max-height:88vh;overflow-y:auto;overscroll-behavior:contain}
+.sheet-bg{position:fixed;inset:0;z-index:19;background:rgba(16,27,51,.32)}
+.sheet .in{max-width:620px;margin:0 auto;display:flex;flex-direction:column;gap:12px}
+.sheet h3{font-size:clamp(22px,5vw,27px);line-height:1.15}
+.sheet .shhead{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+.piezas{display:flex;flex-wrap:wrap;gap:6px}
+.pieza{display:inline-flex;align-items:baseline;gap:6px;border:1px solid var(--line);border-radius:999px;padding:4px 10px;font-size:12px;color:var(--muted)}
+.pieza b{font-weight:500;color:var(--fg)}
+.frase{font:400 clamp(18px,4.4vw,21px)/1.4 var(--f-display);margin:2px 0 0;text-wrap:pretty}
+.kw{font-size:13px;color:var(--muted);margin:0}
+.kw b{font-weight:500;color:var(--fg)}
+.vacio{font-size:14px;color:var(--muted);margin:0;padding:14px;border:1px dashed var(--line);border-radius:12px}
+.procard{display:flex;gap:12px;align-items:flex-start;border:1px solid var(--dorado);border-radius:12px;padding:12px 14px;
+  background:color-mix(in srgb,var(--dorado) 8%,transparent);font-size:13.5px}
+.procard p{margin:2px 0 0;color:var(--muted);font-size:13px}
+.completa{display:flex;flex-direction:column;border-top:1px solid var(--line);margin-top:4px}
+.completa .lbl{font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin:14px 0 4px}
+.completa details{border-bottom:1px solid var(--line)}
+.completa summary{display:flex;justify-content:space-between;gap:10px;align-items:baseline;padding:11px 2px;cursor:pointer;list-style:none}
+.completa summary::-webkit-details-marker{display:none}
+.completa summary small{color:var(--muted);font-size:12px;white-space:nowrap}
+.completa summary small.ok{color:var(--accent)}
+.completa .txt{padding:0 2px 14px;font-size:14px;display:flex;flex-direction:column;gap:6px}
+.completa .txt p{margin:0}
+.tri{font:inherit;color:inherit;text-align:left;cursor:pointer}
+.tri:hover{border-color:var(--accent)}
 .sheet a.lnk{display:flex;justify-content:space-between;gap:10px;border:1px solid var(--line);border-radius:10px;padding:11px 12px;color:inherit;text-decoration:none}
 .sheet a.lnk span{color:var(--muted);font-size:12px;word-break:break-all}
 .sheet .soon{font-size:13px;color:var(--muted)}
@@ -255,11 +280,14 @@ h3.sec{font-size:20px;margin:22px 0 10px}
   </section>
 </div>
 
+<div class="sheet-bg" id="sheetBg" hidden></div>
 <div class="sheet" id="sheet" hidden role="dialog" aria-modal="true" aria-labelledby="shTitle">
   <div class="in">
-    <div style="display:flex;justify-content:space-between;align-items:center;gap:10px"><h3 id="shTitle"></h3><button class="btn-ghost" id="shClose" type="button">Cerrar</button></div>
-    <p class="soon" id="shSoon"></p>
-    <div id="shLinks" style="display:flex;flex-direction:column;gap:8px"></div>
+    <div class="shhead"><div><div class="eyebrow" id="shTipo"></div><h3 id="shTitle"></h3></div><button class="btn-ghost" id="shClose" type="button">Cerrar</button></div>
+    <div class="piezas" id="shPiezas"></div>
+    <div id="shBody" style="display:flex;flex-direction:column;gap:10px"></div>
+    <div class="completa" id="shMas"></div>
+    <p class="soon" id="shFoot"></p>
   </div>
 </div>
 
@@ -281,7 +309,8 @@ const ELEM=['Fuego','Tierra','Aire','Agua'], MODAL=['Cardinal','Fijo','Mutable']
 // Dignidades: [domicilio, exaltación, exilio, caída] (índices de signo)
 const DIG={0:[[4],[0],[10],[6]],1:[[3],[1],[9],[7]],2:[[2,5],[5],[8,11],[11]],3:[[1,6],[11],[7,0],[5]],4:[[0,7],[9],[6,1],[3]],
   5:[[8,11],[3],[2,5],[9]],6:[[9,10],[6],[3,4],[0]],7:[[10],[],[4],[]],8:[[11],[],[5],[]],9:[[7],[],[1],[]]};
-function dignidad(id,sg){const d=DIG[id];if(!d)return '';const t=[];if(d[0].includes(sg))t.push('domicilio');if(d[1].includes(sg))t.push('exaltación');if(d[2].includes(sg))t.push('exilio');if(d[3].includes(sg))t.push('caída');return t.length?'En '+t.join(' y '):''}
+function dignidades(id,sg){const d=DIG[id];if(!d)return [];return ['domicilio','exaltación','exilio','caída'].filter((_,i)=>d[i].includes(sg))}
+function dignidad(id,sg){const t=dignidades(id,sg);return t.length?'En '+t.join(' y '):''}
 // Aspectos: ángulo, orbe, nombre, símbolo, tipo
 const ASPECTOS=[[0,8,'Conjunción','☌','c'],[180,8,'Oposición','☍','t'],[120,7,'Trígono','△','a'],[90,7,'Cuadratura','□','t'],[60,5,'Sextil','⚹','a'],[150,3,'Quincuncio','⚻','t']];
 const ASP_COL={c:'#B8975A',a:'#8FA396',t:'#B5654A'};
@@ -431,7 +460,8 @@ function pintar(c){
   const sol=c.planetas[0],luna=c.planetas[1];
   const tri=[{k:'Sol',g:sol.g,lon:sol.lon,slugP:'sol'},{k:'Luna',g:luna.g,lon:luna.lon,slugP:'luna'}];
   if(c.asc!=null)tri.push({k:'Ascendente',g:'AC',lon:c.asc,slugP:'ascendente'});
-  $('triad').replaceChildren(...tri.map(t=>{const d=document.createElement('div');d.className='tri';
+  $('triad').replaceChildren(...tri.map(t=>{const d=document.createElement('button');d.type='button';d.className='tri';
+    d.onclick=()=>leerMas(c,t.k==='Ascendente'?{id:'AC',n:'Ascendente',g:'AC',lon:c.asc}:c.planetas[t.k==='Sol'?0:1]);d.setAttribute('aria-label',`Leer sobre ${t.k} en ${SIGNOS[signOf(t.lon)]}`);
     d.innerHTML=`<span class="g" aria-hidden="true">${t.g==='AC'?'<span style="font:600 17px var(--f-text);letter-spacing:.06em">AC</span>':t.g}</span><span class="k">${t.k}</span><span class="s">${SIGNOS[signOf(t.lon)]}</span><span class="d">${degStr(t.lon)}</span>`;return d}));
   if(c.tipo==='retorno'&&c.ascCasaNatal){const d=$('triad').lastChild.querySelector('.d');d.textContent+=` · en tu casa natal ${c.ascCasaNatal}`}
   if(c.asc==null){const d=document.createElement('div');d.className='tri';d.innerHTML='<span class="k">Ascendente</span><span class="d">Necesita la hora de nacimiento</span>';$('triad').appendChild(d)}
@@ -439,8 +469,8 @@ function pintar(c){
   for(const pl of c.planetas){const sg=signOf(pl.lon);const dg=dignidad(pl.id,sg);const rx=pl.vel<0&&pl.id!==11;
     const r=document.createElement('div');r.className='prow';r.tabIndex=0;r.setAttribute('role','button');r.setAttribute('aria-expanded','false');
     r.innerHTML=`<span class="g" aria-hidden="true">${pl.g}</span><div><div class="n">${pl.n}${rx?'<span class="rx" title="Retrógrado">R</span>':''}<span class="chev" aria-hidden="true">▸</span></div><div class="sub">${SIGNOS[sg]} ${degStr(pl.lon)}${pl.casa?' · Casa '+pl.casa:''}${pl.casaNatal?' · en tu casa natal '+pl.casaNatal:''}${dg?' · <span class="dig">'+dg+'</span>':''}</div></div>`;
-    const b=document.createElement('button');b.type='button';b.className='more';b.textContent='Leer más';b.setAttribute('aria-label',`Leer más sobre ${pl.n} en ${SIGNOS[sg]}`);
-    b.onclick=e=>{e.stopPropagation();leerMas(pl.n,SIGNOS[sg],pl.casa,c.tipo==='retorno')};r.appendChild(b);
+    const b=document.createElement('button');b.type='button';b.className='more';b.textContent='Leer';b.setAttribute('aria-label',`Leer sobre ${pl.n} en ${SIGNOS[sg]}`);
+    b.onclick=e=>{e.stopPropagation();leerMas(c,pl)};r.appendChild(b);
     const det=document.createElement('div');det.className='pdet';det.hidden=true;
     const asp=c.aspectos.filter(x=>x.a.id===pl.id||x.b.id===pl.id).sort((x,y)=>x.orbe-y.orbe);
     const vel=Math.abs(pl.vel);
@@ -477,25 +507,99 @@ function pintarEnergias(c){
     const th=document.createElement('th');th.scope='row';th.textContent=pp[i].g;th.title=pp[i].n;if(typeof pp[i].id==='string')th.style.font='600 10px var(--f-text)';tr.appendChild(th);t.appendChild(tr)}
   // Ángulos y casas
   if(c.casas){const ang=[['AC',c.asc],['MC',c.mc],['DC',c.asc+180],['FC',c.mc+180]];
-    $('casas').innerHTML=ang.map(([k,l])=>`<div><b>${k}</b><span>${SIGNOS[signOf(l)]} ${degStr(l)}</span></div>`).join('')+
+    $('casas').innerHTML=ang.map(([k,l])=>`<div${k==='AC'||k==='MC'&&c.tipo!=='retorno'?` class="leer" role="button" tabindex="0" data-k="${k}" aria-label="Leer sobre ${k==='AC'?'Ascendente':'Medio Cielo'} en ${SIGNOS[signOf(l)]}"`:''}><b>${k}</b><span>${SIGNOS[signOf(l)]} ${degStr(l)}</span></div>`).join('')+
       c.casas.slice(1,13).map((l,i)=>`<div><b>Casa ${i+1}</b><span>${SIGNOS[signOf(l)].slice(0,3)} ${degStr(l)}</span></div>`).join('')}
+  if(c.casas)$('casas').querySelectorAll('.leer').forEach(d=>{const ab=()=>leerMas(c,d.dataset.k==='AC'?{id:'AC',n:'Ascendente',lon:c.asc}:{id:'MC',n:'Medio Cielo',lon:c.mc});
+    d.onclick=ab;d.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();ab()}}});
   else $('casas').innerHTML='<p class="hint">Las casas y los ángulos necesitan la hora de nacimiento.</p>';
 }
 function tab(on){for(const [b,pn] of [['tab-pl','pan-pl'],['tab-en','pan-en']]){const sel=b===on;$(b).setAttribute('aria-selected',sel);$(pn).hidden=!sel}}
 $('tab-pl').onclick=()=>tab('tab-pl');$('tab-en').onclick=()=>tab('tab-en');
 
-/* ===== Leer más (preparado para la enciclopedia) ===== */
-function leerMas(planeta,signo,casa,ret){const pre=ret?'/retorno-solar':'';
-  const links=[[`${planeta} en ${signo}${ret?' (retorno solar)':''}`,`${pre}/${slug(planeta)}-en-${slug(signo)}`]];
-  if(casa)links.push([`${planeta} en casa ${casa}${ret?' (retorno solar)':''}`,`${pre}/${slug(planeta)}-en-casa-${casa}`]);
-  $('shTitle').textContent=`${planeta} en ${signo}`;
-  $('shSoon').textContent=ENCICLOPEDIA.activa?'Abre la entrada de la enciclopedia:':'La enciclopedia todavía no está conectada. Estas serán sus direcciones:';
-  $('shLinks').replaceChildren(...links.map(([t,path])=>{const a=document.createElement('a');a.className='lnk';a.href=ENCICLOPEDIA.base+path;a.target='_blank';a.rel='noopener';
-    if(!ENCICLOPEDIA.activa)a.addEventListener('click',e=>e.preventDefault());a.innerHTML=`<b></b><span></span>`;a.querySelector('b').textContent=t;a.querySelector('span').textContent=path;return a}));
-  $('sheet').hidden=false;$('shClose').focus();
+/* ===== Lectura: enciclopedia conectada por dirección fija =====
+   Los textos vienen de data/enciclopedia.json (se genera desde el Excel con herramientas/importar_enciclopedia.py).
+   Cada tema se busca por su "Dirección en la app"; si aún no tiene texto, se muestra "Próximamente".
+   La app no escribe interpretaciones: solo muestra lo que hay en la enciclopedia. */
+let ENC={temas:{}};
+const encListo=fetch('./data/enciclopedia.json').then(r=>r.ok?r.json():null).then(d=>{if(d&&d.temas)ENC=d}).catch(()=>{});
+const tema=ruta=>ENC.temas[ruta]||null;
+// Direcciones (idénticas a la columna "Dirección en la app" del Excel)
+const RUTA={
+  escena:(p,s,h)=>`/escena/${slug(p)}-en-${slug(s)}-casa-${h}`,
+  energia:(p,s)=>`/${slug(p)}-en-${slug(s)}`,
+  escenario:(p,h)=>`/${slug(p)}-en-casa-${h}`,
+  encuentro:(a,asp,b)=>`/${slug(a)}-${slug(asp)}-${slug(b)}`,
+  retrogrado:p=>`/${slug(p)}-retrogrado`,
+  dignidad:(p,d)=>`/${slug(p)}-en-${slug(d)}`,
+  retCasa:(p,h)=>`/retorno-solar/${slug(p)}-en-casa-${h}`,
+  retAsc:s=>`/retorno-solar/ascendente-en-${slug(s)}`,
+  retAscNatal:h=>`/retorno-solar/ascendente-en-casa-natal-${h}`,
+  retSobre:(h,n)=>`/retorno-solar/casa-${h}-en-casa-natal-${n}`,
+  pieza:x=>`/${slug(x)}`
+};
+const ROMANO=['','I','II','III','IV','V','VI','VII','VIII','IX','X','XI','XII'];
+// Separa "frase\nPalabras clave: ..." en dos partes
+function partes(txt){const lineas=txt.split('\n').map(x=>x.trim()).filter(Boolean);let kw='';
+  const i=lineas.findIndex(l=>/^palabras clave:/i.test(l));if(i>=0){kw=lineas[i].replace(/^palabras clave:\s*/i,'');lineas.splice(i,1)}
+  return {texto:lineas,kw}}
+function nodoTexto(txt,principal){const f=document.createDocumentFragment();const {texto,kw}=partes(txt);
+  texto.forEach((t,i)=>{const p=document.createElement('p');if(principal&&i===0)p.className='frase';p.textContent=t;f.appendChild(p)});
+  if(kw){const p=document.createElement('p');p.className='kw';p.innerHTML='<b>Palabras clave:</b> ';p.append(kw);f.appendChild(p)}
+  return f}
+
+function leerMas(c,pl){
+  const ret=c.tipo==='retorno';const sg=signOf(pl.lon);const signo=SIGNOS[sg];const esAC=typeof pl.id==='string'; // Ascendente o Medio Cielo
+  const casa=esAC?null:pl.casa;
+  // 1. El tema principal: la escena (Personaje + Energía + Escenario)
+  let principal,tipo;
+  if(ret){
+    if(esAC){principal={ruta:RUTA.retAsc(signo),titulo:`Ascendente del retorno en ${signo}`};tipo='Retorno solar'}
+    else{principal={ruta:RUTA.retCasa(pl.n,casa),titulo:`${pl.n} en casa ${casa} del retorno`};tipo='Retorno solar'}
+  }else if(esAC||!casa){principal={ruta:RUTA.energia(pl.n,signo),titulo:`${pl.n} en ${signo}`};tipo=esAC?pl.n:'Personaje en energía'}
+  else{principal={ruta:RUTA.escena(pl.n,signo,casa),titulo:`${pl.n} en ${signo} en casa ${casa}`};tipo='Escena'}
+  // 2. Lo que completa la lectura
+  const mas=[];const add=(grupo,ruta,titulo)=>mas.push({grupo,ruta,titulo});
+  if(ret){
+    if(esAC){if(c.ascCasaNatal)add('En tu carta natal',RUTA.retAscNatal(c.ascCasaNatal),`Ascendente del retorno en tu casa natal ${c.ascCasaNatal}`)}
+    else if(c.natal.casas&&casa){const n=houseOf(c.casas[casa],c.natal.casas);add('En tu carta natal',RUTA.retSobre(casa,n),`Casa ${casa} del retorno sobre tu casa natal ${n}`)}
+  }else{
+    for(const x of c.aspectos.filter(x=>x.a.id===pl.id||x.b.id===pl.id).sort((x,y)=>x.orbe-y.orbe))
+      add('Encuentros',RUTA.encuentro(x.a.n,x.nom,x.b.n),`${x.a.n} ${x.nom.toLowerCase()} ${x.b.n}`);
+    if(!esAC&&casa){add('Las piezas de la escena',RUTA.energia(pl.n,signo),`${pl.n} en ${signo}`);add('Las piezas de la escena',RUTA.escenario(pl.n,casa),`${pl.n} en casa ${casa}`)}
+    if(!esAC){for(const d of dignidades(pl.id,sg))add('Dignidad y movimiento',RUTA.dignidad(pl.n,d),`${pl.n} en ${d}`);
+      if(pl.vel<0&&pl.id!==11)add('Dignidad y movimiento',RUTA.retrogrado(pl.n),`${pl.n} retrógrado`)}
+  }
+  // Pintar
+  $('shTipo').textContent=tipo;
+  $('shTitle').textContent=(tema(principal.ruta)||{}).t||principal.titulo;
+  const pz=[['Personaje',pl.n,esAC?'':pl.g]];pz.push(['Energía',signo,SG[sg]]);if(casa)pz.push(['Escenario',`Casa ${ROMANO[casa]}${ret?' del retorno':''}`,'']);
+  $('shPiezas').replaceChildren(...pz.map(([k,v,g])=>{const s=document.createElement('span');s.className='pieza';s.innerHTML=`${k}${g?' <span class="g" aria-hidden="true"></span>':''} <b></b>`;if(g)s.querySelector('.g').textContent=g;s.querySelector('b').textContent=v;return s}));
+  const body=$('shBody');body.replaceChildren();const t=tema(principal.ruta);
+  if(t&&t.g)body.appendChild(nodoTexto(t.g,true));
+  else if(!(t&&t.s)){const p=document.createElement('p');p.className='vacio';p.textContent='Próximamente. Este texto de la enciclopedia aún se está escribiendo.';body.appendChild(p)}
+  const pc=document.createElement('div');pc.className='procard';
+  pc.innerHTML='<span class="pro" style="margin:2px 0 0">Pro</span><div><b></b><p></p></div>';
+  pc.querySelector('b').textContent=t&&t.s?'Tema exclusivo de la versión Pro':'Versión extendida';
+  pc.querySelector('p').textContent=t&&t.p?'Ya está escrita. Podrás leerla completa con la versión Pro.':'En preparación para la versión Pro.';
+  body.appendChild(pc);
+  const box=$('shMas');box.replaceChildren();let grupo=null;
+  for(const m of mas){if(m.grupo!==grupo){grupo=m.grupo;const l=document.createElement('div');l.className='lbl';l.textContent=grupo;box.appendChild(l)}
+    const tm=tema(m.ruta);const d=document.createElement('details');const su=document.createElement('summary');
+    su.innerHTML='<span></span><small></small>';su.firstChild.textContent=(tm&&tm.t)||m.titulo;
+    const sm=su.lastChild;if(tm&&tm.g){sm.textContent='Leer';sm.className='ok'}else sm.textContent=tm&&tm.p?'Pro':'Próximamente';
+    const tx=document.createElement('div');tx.className='txt';
+    if(tm&&tm.g)tx.appendChild(nodoTexto(tm.g,false));else{const p=document.createElement('p');p.className='hint';p.textContent=tm&&tm.p?'Disponible en la versión Pro.':'Aún no está escrito.';tx.appendChild(p)}
+    if(ENCICLOPEDIA.activa){const a=document.createElement('a');a.href=ENCICLOPEDIA.base+m.ruta;a.target='_blank';a.rel='noopener';a.textContent='Abrir en la enciclopedia';a.className='hint';tx.appendChild(a)}
+    d.append(su,tx);box.appendChild(d)}
+  box.hidden=!mas.length;
+  $('shFoot').replaceChildren();
+  if(ENCICLOPEDIA.activa){const a=document.createElement('a');a.href=ENCICLOPEDIA.base+principal.ruta;a.target='_blank';a.rel='noopener';a.textContent='Abrir en la enciclopedia';$('shFoot').appendChild(a)}
+  $('sheet').scrollTop=0;$('sheet').hidden=false;$('sheetBg').hidden=false;$('shClose').focus();
 }
-$('shClose').onclick=()=>$('sheet').hidden=true;
-document.addEventListener('keydown',e=>{if(e.key==='Escape')$('sheet').hidden=true});
+const cerrarLectura=()=>{$('sheet').hidden=true;$('sheetBg').hidden=true};
+$('shClose').onclick=cerrarLectura;$('sheetBg').onclick=cerrarLectura;
+document.addEventListener('keydown',e=>{if(e.key==='Escape')cerrarLectura()});
+
 
 /* ===== Ciudades (sin conexión a servicios externos) ===== */
 let CIUDADES=null,TZ=[],AD=[];

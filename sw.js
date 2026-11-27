@@ -1,6 +1,6 @@
 /* Service worker de Núcleo Carta Natal: guarda la app para que funcione sin conexión.
    Al publicar cambios, sube el número de VERSION para que los teléfonos descarguen la nueva. */
-const VERSION = 'v1';
+const VERSION = 'v2';
 const CACHE = 'carta-natal-' + VERSION;
 const ARCHIVOS = [
   './',
@@ -24,7 +24,8 @@ const ARCHIVOS = [
   './lib/swisseph/wasm/swisseph.js',
   './lib/swisseph/wasm/swisseph.wasm',
   './lib/swisseph/wasm/swisseph.data.wasm',
-  './data/ciudades.txt'
+  './data/ciudades.txt',
+  './data/enciclopedia.json'
 ];
 
 self.addEventListener('install', e => {

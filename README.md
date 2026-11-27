@@ -12,6 +12,22 @@ Beta publicada en https://astrologico.nucleodigital.studio/carta/ (no indexada).
 - `manifest.webmanifest`, `sw.js`, `icons/`: lo que hace la app instalable y que funcione sin conexión.
 - `fonts/`: Fraunces, Inter y Noto Sans Symbols servidas desde aquí (licencia SIL OFL), para no depender de Google Fonts sin conexión.
 - `.htaccess`: tipos de archivo, caché y https para Hostinger.
+- `data/enciclopedia.json`: los textos gratuitos de la enciclopedia que la app muestra (se genera, no se edita a mano).
+- `herramientas/`: scripts de mantenimiento. **No se suben a Hostinger.**
+
+## Enciclopedia
+
+Cada elemento de la carta abre su lectura: la escena (Personaje + Energía + Escenario) y, debajo, lo que la completa (encuentros, las piezas de la escena, dignidad y retrogradación). En el retorno solar, el planeta en la casa del retorno y la superposición con la casa natal.
+
+Cada tema se busca por su **Dirección en la app** de la lista de la enciclopedia (Excel, que se guarda fuera del repositorio). Si tiene versión gratuita, se muestra; si no, aparece «Próximamente». La versión Pro solo se anuncia: sus textos no se copian a la app porque todo lo que está en la app lo puede leer cualquiera. Llegarán con las cuentas Pro.
+
+Para actualizar los textos después de editar el Excel:
+
+```
+python3 herramientas/importar_enciclopedia.py RUTA/lista-enciclopedia.xlsx
+```
+
+y luego subir `VERSION` en `sw.js`. Si cambias una dirección en el Excel, también hay que cambiarla en `RUTA` dentro de `index.html`.
 
 ## App instalable y sin conexión
 
