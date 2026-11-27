@@ -19,7 +19,7 @@ Beta publicada en https://astrologico.nucleodigital.studio/carta/ (no indexada).
 
 Cada elemento de la carta abre su lectura: la escena (Personaje + Energía + Escenario) y, debajo, lo que la completa (encuentros, las piezas de la escena, dignidad y retrogradación). En el retorno solar, el planeta en la casa del retorno y la superposición con la casa natal.
 
-Cada tema se busca por su **Dirección en la app** de la lista de la enciclopedia (Excel, que se guarda fuera del repositorio). Si tiene versión gratuita, se muestra; si no, aparece «Próximamente». La versión Pro solo se anuncia: sus textos no se copian a la app porque todo lo que está en la app lo puede leer cualquiera. Llegarán con las cuentas Pro.
+Cada tema se busca por su **Dirección en la app** de la lista de la enciclopedia (Excel, que se guarda fuera del repositorio). Si tiene versión gratuita, se muestra; si no, aparece «Próximamente». Los textos de la versión Pro van en `data/enciclopedia-pro.json`, que **no se guarda en el repositorio** (se genera con el script y se incluye solo en el paquete que se sube a Hostinger). La app solo lo carga si `PLANES.actual` es `'pro'` (al principio del `<script>` de `index.html`). **Ahora mismo está en `'pro'`**: todo desbloqueado. Para volver a la versión gratuita, cambia a `'gratis'` y no subas ese archivo. Cualquier archivo subido al hosting lo puede descargar cualquiera; con cuentas Pro de verdad, los textos Pro deberán servirse desde el servidor.
 
 Para actualizar los textos después de editar el Excel:
 

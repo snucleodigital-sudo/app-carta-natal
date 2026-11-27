@@ -8,8 +8,10 @@ Lee cada pestaña del Excel y escribe data/enciclopedia.json con:
   - qué temas tienen ya versión Pro escrita (solo la marca, no el texto),
   - qué temas son "Solo Pro".
 
-Los textos Pro NO se copian a la app a propósito: todo lo que está en la app
-lo puede leer cualquiera. Se añadirán cuando existan cuentas Pro con servidor.
+Además escribe data/enciclopedia-pro.json con los textos de la versión Pro.
+La app solo lo carga si PLANES.actual es 'pro' (index.html). Ojo: cualquier
+archivo subido al hosting lo puede descargar cualquiera; cuando haya cuentas
+Pro de verdad, este archivo debe servirse desde el servidor solo a quien pague.
 
 Una celda cuenta como texto si no es uno de los estados (Pendiente, Existe,
 Parcial, No aplica). La dirección (columna "Dirección en la app") es la clave:
@@ -32,7 +34,7 @@ def es_texto(v):
 
 def main(xlsx, salida):
     wb = openpyxl.load_workbook(xlsx, read_only=True, data_only=True)
-    temas, total, con_gratis, con_pro = {}, 0, 0, 0
+    temas, pro_textos, total, con_gratis, con_pro = {}, {}, 0, 0, 0
     for nombre in PESTANAS:
         ws = wb[nombre]
         filas = ws.iter_rows(min_row=1, values_only=True)
@@ -54,6 +56,7 @@ def main(xlsx, salida):
                 con_gratis += 1
             if es_texto(pro):
                 t["p"] = 1
+                pro_textos[str(ruta).strip()] = pro.strip()
                 con_pro += 1
             if solo_pro:
                 t["s"] = 1
@@ -62,6 +65,8 @@ def main(xlsx, salida):
                 temas[str(ruta).strip()] = t
     datos = {"version": 1, "temas": temas}
     Path(salida).write_text(json.dumps(datos, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
+    Path(salida).with_name("enciclopedia-pro.json").write_text(
+        json.dumps({"version": 1, "temas": pro_textos}, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
     print(f"{total} temas leídos · {con_gratis} con versión gratuita · {con_pro} con versión Pro → {salida}")
 
 

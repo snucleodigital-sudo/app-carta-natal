@@ -192,6 +192,13 @@ h3.sec{font-size:20px;margin:22px 0 10px}
 .completa summary small.ok{color:var(--accent)}
 .completa .txt{padding:0 2px 14px;font-size:14px;display:flex;flex-direction:column;gap:6px}
 .completa .txt p{margin:0}
+.lectura h4{font:400 18px/1.25 var(--f-display);margin:12px 0 0;color:var(--accent)}
+.lectura p{margin:0;font-size:14.5px;line-height:1.6}
+.lectura p.frase{font:400 clamp(18px,4.4vw,21px)/1.4 var(--f-display)}
+.lectura b{font-weight:600}
+ul.vin{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:6px;font-size:14px;line-height:1.55}
+ul.vin li::marker{color:var(--dorado)}
+.completa .txt.lectura h4{font-size:16px}
 .tri{font:inherit;color:inherit;text-align:left;cursor:pointer}
 .tri:hover{border-color:var(--accent)}
 .sheet a.lnk{display:flex;justify-content:space-between;gap:10px;border:1px solid var(--line);border-radius:10px;padding:11px 12px;color:inherit;text-decoration:none}
@@ -210,7 +217,7 @@ h3.sec{font-size:20px;margin:22px 0 10px}
         <circle cx="50" cy="50" r="31" fill="none" stroke="#101B33" stroke-width="7" stroke-dasharray="15.2 4.28" transform="rotate(-82 50 50)"/>
         <circle cx="50" cy="50" r="10" fill="#B8975A"/>
       </svg>
-      <span><b>Núcleo Astrológico</b><small>Carta natal</small></span>
+      <span><b>Núcleo Astrológico</b><small>Carta natal<span class="pro" id="proBadge" hidden>Pro</span></small></span>
     </a>
     <div class="top-actions">
       <button class="btn-ghost" id="instalar" type="button" hidden>Instalar</button>
@@ -296,7 +303,7 @@ import SwissEph from './lib/swisseph/src/swisseph.js';
 
 /* ===== CONFIGURACIÓN (cambiar aquí) ===== */
 const ENCICLOPEDIA = { activa:false, base:'https://astrologico.nucleodigital.studio' }; // URLs: /luna-en-cancer y /luna-en-casa-4
-const PLANES = { actual:'gratis', limite:{ gratis:3, pro:Infinity } };                 // perfiles guardados por plan
+const PLANES = { actual:'pro', limite:{ gratis:3, pro:Infinity } }; // 'pro' = todo desbloqueado (perfiles ilimitados y textos extendidos). Para volver a la versión gratuita: 'gratis'
 const SISTEMA_CASAS = 'P'; // Placidus
 
 const SIGNOS = ['Aries','Tauro','Géminis','Cáncer','Leo','Virgo','Libra','Escorpio','Sagitario','Capricornio','Acuario','Piscis'];
@@ -520,9 +527,14 @@ $('tab-pl').onclick=()=>tab('tab-pl');$('tab-en').onclick=()=>tab('tab-en');
    Los textos vienen de data/enciclopedia.json (se genera desde el Excel con herramientas/importar_enciclopedia.py).
    Cada tema se busca por su "Dirección en la app"; si aún no tiene texto, se muestra "Próximamente".
    La app no escribe interpretaciones: solo muestra lo que hay en la enciclopedia. */
-let ENC={temas:{}};
-const encListo=fetch('./data/enciclopedia.json').then(r=>r.ok?r.json():null).then(d=>{if(d&&d.temas)ENC=d}).catch(()=>{});
+let ENC={temas:{}},ENC_PRO={};
+$('proBadge').hidden=PLANES.actual!=='pro';
+const esPro=()=>PLANES.actual==='pro';
+fetch('./data/enciclopedia.json').then(r=>r.ok?r.json():null).then(d=>{if(d&&d.temas)ENC=d}).catch(()=>{});
+// Los textos extendidos solo se descargan en modo Pro
+if(esPro())fetch('./data/enciclopedia-pro.json').then(r=>r.ok?r.json():null).then(d=>{if(d&&d.temas)ENC_PRO=d.temas}).catch(()=>{});
 const tema=ruta=>ENC.temas[ruta]||null;
+const textoPro=ruta=>esPro()?ENC_PRO[ruta]||null:null;
 // Direcciones (idénticas a la columna "Dirección en la app" del Excel)
 const RUTA={
   escena:(p,s,h)=>`/escena/${slug(p)}-en-${slug(s)}-casa-${h}`,
@@ -542,6 +554,18 @@ const ROMANO=['','I','II','III','IV','V','VI','VII','VIII','IX','X','XI','XII'];
 function partes(txt){const lineas=txt.split('\n').map(x=>x.trim()).filter(Boolean);let kw='';
   const i=lineas.findIndex(l=>/^palabras clave:/i.test(l));if(i>=0){kw=lineas[i].replace(/^palabras clave:\s*/i,'');lineas.splice(i,1)}
   return {texto:lineas,kw}}
+// Texto extendido: títulos de sección, párrafos y viñetas (•)
+function nodoPro(txt,principal){const f=document.createDocumentFragment();let lineas=txt.split('\n').map(x=>x.trim()).filter(Boolean);
+  if(lineas[0]&&lineas[0].includes(' · '))lineas=lineas.slice(1); // la primera línea repite el título
+  let ul=null,primero=principal;
+  const conEtiqueta=(el,t,max)=>{const i=t.indexOf(':');if(i>0&&i<=max){const b=document.createElement('b');b.textContent=t.slice(0,i+1);el.append(b,t.slice(i+1))}else el.textContent=t};
+  for(const l of lineas){
+    if(/^[•·\-]\s*/.test(l)){if(!ul){ul=document.createElement('ul');ul.className='vin';f.appendChild(ul)}const li=document.createElement('li');conEtiqueta(li,l.replace(/^[•·\-]\s*/,''),48);ul.appendChild(li);continue}
+    ul=null;
+    if(/^palabras clave:/i.test(l)){const p=document.createElement('p');p.className='kw';conEtiqueta(p,l,20);f.appendChild(p);continue}
+    if(l.length<=70&&!/[.?!…:;,]$/.test(l)){const h=document.createElement('h4');h.textContent=l;f.appendChild(h);continue}
+    const p=document.createElement('p');if(primero){p.className='frase';primero=false;p.textContent=l}else conEtiqueta(p,l,22);f.appendChild(p)}
+  return f}
 function nodoTexto(txt,principal){const f=document.createDocumentFragment();const {texto,kw}=partes(txt);
   texto.forEach((t,i)=>{const p=document.createElement('p');if(principal&&i===0)p.className='frase';p.textContent=t;f.appendChild(p)});
   if(kw){const p=document.createElement('p');p.className='kw';p.innerHTML='<b>Palabras clave:</b> ';p.append(kw);f.appendChild(p)}
@@ -574,21 +598,25 @@ function leerMas(c,pl){
   $('shTitle').textContent=(tema(principal.ruta)||{}).t||principal.titulo;
   const pz=[['Personaje',pl.n,esAC?'':pl.g]];pz.push(['Energía',signo,SG[sg]]);if(casa)pz.push(['Escenario',`Casa ${ROMANO[casa]}${ret?' del retorno':''}`,'']);
   $('shPiezas').replaceChildren(...pz.map(([k,v,g])=>{const s=document.createElement('span');s.className='pieza';s.innerHTML=`${k}${g?' <span class="g" aria-hidden="true"></span>':''} <b></b>`;if(g)s.querySelector('.g').textContent=g;s.querySelector('b').textContent=v;return s}));
-  const body=$('shBody');body.replaceChildren();const t=tema(principal.ruta);
-  if(t&&t.g)body.appendChild(nodoTexto(t.g,true));
+  const body=$('shBody');body.replaceChildren();const t=tema(principal.ruta);const tp=textoPro(principal.ruta);
+  body.classList.toggle('lectura',!!tp);
+  if(tp)body.appendChild(nodoPro(tp,true));
+  else if(t&&t.g)body.appendChild(nodoTexto(t.g,true));
   else if(!(t&&t.s)){const p=document.createElement('p');p.className='vacio';p.textContent='Próximamente. Este texto de la enciclopedia aún se está escribiendo.';body.appendChild(p)}
-  const pc=document.createElement('div');pc.className='procard';
+  if(esPro()&&!tp&&t&&t.g){const p=document.createElement('p');p.className='hint';p.style.margin='0';p.textContent='La versión extendida de este tema aún se está escribiendo.';body.appendChild(p)}
+  if(!esPro()){const pc=document.createElement('div');pc.className='procard';
   pc.innerHTML='<span class="pro" style="margin:2px 0 0">Pro</span><div><b></b><p></p></div>';
   pc.querySelector('b').textContent=t&&t.s?'Tema exclusivo de la versión Pro':'Versión extendida';
   pc.querySelector('p').textContent=t&&t.p?'Ya está escrita. Podrás leerla completa con la versión Pro.':'En preparación para la versión Pro.';
-  body.appendChild(pc);
+  body.appendChild(pc)}
   const box=$('shMas');box.replaceChildren();let grupo=null;
   for(const m of mas){if(m.grupo!==grupo){grupo=m.grupo;const l=document.createElement('div');l.className='lbl';l.textContent=grupo;box.appendChild(l)}
     const tm=tema(m.ruta);const d=document.createElement('details');const su=document.createElement('summary');
     su.innerHTML='<span></span><small></small>';su.firstChild.textContent=(tm&&tm.t)||m.titulo;
-    const sm=su.lastChild;if(tm&&tm.g){sm.textContent='Leer';sm.className='ok'}else sm.textContent=tm&&tm.p?'Pro':'Próximamente';
+    const tmp=textoPro(m.ruta);
+    const sm=su.lastChild;if(tmp||(tm&&tm.g)){sm.textContent='Leer';sm.className='ok'}else sm.textContent=tm&&tm.p&&!esPro()?'Pro':'Próximamente';
     const tx=document.createElement('div');tx.className='txt';
-    if(tm&&tm.g)tx.appendChild(nodoTexto(tm.g,false));else{const p=document.createElement('p');p.className='hint';p.textContent=tm&&tm.p?'Disponible en la versión Pro.':'Aún no está escrito.';tx.appendChild(p)}
+    if(tmp){tx.classList.add('lectura');tx.appendChild(nodoPro(tmp,false))}else if(tm&&tm.g)tx.appendChild(nodoTexto(tm.g,false));else{const p=document.createElement('p');p.className='hint';p.textContent=tm&&tm.p?'Disponible en la versión Pro.':'Aún no está escrito.';tx.appendChild(p)}
     if(ENCICLOPEDIA.activa){const a=document.createElement('a');a.href=ENCICLOPEDIA.base+m.ruta;a.target='_blank';a.rel='noopener';a.textContent='Abrir en la enciclopedia';a.className='hint';tx.appendChild(a)}
     d.append(su,tx);box.appendChild(d)}
   box.hidden=!mas.length;
@@ -663,7 +691,7 @@ $('toNew').onclick=()=>{$('form').reset();sel=null;$('hora').disabled=false;$('n
 const limite=()=>PLANES.limite[PLANES.actual];
 function perfiles(){return store.get('nucleo.perfiles',[])}
 function pintarPerfiles(){const ps=perfiles();const box=$('profiles');box.replaceChildren();
-  if(!ps.length){const s=document.createElement('span');s.className='quota';s.textContent=`Guarda hasta ${limite()} perfiles gratis en este dispositivo.`;box.appendChild(s);return}
+  if(!ps.length){const s=document.createElement('span');s.className='quota';s.textContent=isFinite(limite())?`Guarda hasta ${limite()} perfiles gratis en este dispositivo.`:'Guarda todos los perfiles que quieras en este dispositivo.';box.appendChild(s);return}
   ps.forEach(p=>{const c=document.createElement('span');c.className='chip';c.tabIndex=0;c.setAttribute('role','button');c.textContent=p.nombre||p.fecha;
     c.onclick=()=>{llenarForm(p);nuevaNatal(calcular(p))};c.onkeydown=e=>{if(e.key==='Enter')c.click()};
     const x=document.createElement('button');x.type='button';x.className='x';x.textContent='×';x.setAttribute('aria-label',`Quitar perfil ${p.nombre||p.fecha}`);

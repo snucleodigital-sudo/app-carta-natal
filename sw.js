@@ -25,7 +25,8 @@ const ARCHIVOS = [
   './lib/swisseph/wasm/swisseph.wasm',
   './lib/swisseph/wasm/swisseph.data.wasm',
   './data/ciudades.txt',
-  './data/enciclopedia.json'
+  './data/enciclopedia.json',
+  './data/enciclopedia-pro.json'
 ];
 
 self.addEventListener('install', e => {
